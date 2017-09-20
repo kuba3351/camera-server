@@ -16,8 +16,22 @@ import java.io.IOException;
 public class ConfigFileService {
 
     private SavingPlacesDTO savingPlacesDTO;
-
     private TimeDTO timeDTO;
+    private UsernameAndPasswordDTO usernameAndPasswordDTO;
+    private NetworkDTO networkDTO;
+
+    public NetworkDTO getNetworkDTO() {
+        return networkDTO;
+    }
+
+    public void setNetworkDTO(NetworkDTO networkDTO) {
+        this.networkDTO = networkDTO;
+    }
+
+    public UsernameAndPasswordDTO getUsernameAndPasswordDTO() {
+        return usernameAndPasswordDTO;
+    }
+
     private Wini file;
 
     private final static Logger logger = Logger.getLogger(ConfigFileService.class);
@@ -37,7 +51,30 @@ public class ConfigFileService {
         logger.info("Wczytywanie konfiguracji miejsc zapisu...");
         savingPlacesDTO = readSavingPlaces();
         databaseService.setDatabaseConfigDTO(savingPlacesDTO.getDatabaseConfig());
+        logger.info("Wczytywanie konfiguracji zabezpieczeń...");
+        usernameAndPasswordDTO = readUsernameAndPasswordDTOFromFile();
+        logger.info("Wczytywanie konfiguracji sieci...");
+        networkDTO = readNetworkDTO();
         logger.info("Zakończono wczytywanie konfiguracji.");
+    }
+
+    private NetworkDTO readNetworkDTO() {
+        NetworkDTO networkDTO = new NetworkDTO();
+        if(file.containsKey("Network")) {
+            Profile.Section network = file.get("Network");
+            if(network.containsKey("network.ssid"))
+                networkDTO.setSsid(network.get("network.ssid"));
+            if(network.containsKey("network.password"))
+                networkDTO.setPassword(network.get("network.password"));
+        }
+        return networkDTO;
+    }
+
+    private void writeNetworkDTO(NetworkDTO networkDTO) throws IOException {
+        file.put("Network", "network.ssid", networkDTO.getSsid());
+        file.put("Network", "network.password", networkDTO.getPassword());
+        file.store();
+        this.networkDTO = networkDTO;
     }
 
     public TimeDTO getTimeDTO() {
@@ -148,5 +185,32 @@ public class ConfigFileService {
         writeDatabaseConfigDTO(savingPlacesDTO.getDatabaseConfig());
         file.store();
         this.savingPlacesDTO = savingPlacesDTO;
+    }
+
+    public void writeAuthInfo(UsernameAndPasswordDTO usernameAndPasswordDTO) throws IOException {
+        file.put("Security", "security.enabled", usernameAndPasswordDTO.getEnabled());
+        file.put("Security", "security.username", usernameAndPasswordDTO.getUsername());
+        file.put("Security", "security.password", usernameAndPasswordDTO.getPassword());
+        this.usernameAndPasswordDTO = usernameAndPasswordDTO;
+        file.store();
+    }
+
+    private UsernameAndPasswordDTO readUsernameAndPasswordDTOFromFile() {
+        UsernameAndPasswordDTO usernameAndPasswordDTO = new UsernameAndPasswordDTO();
+        Profile.Section security = null;
+        if(file.containsKey("Security")) {
+            security = file.get("Security");
+        }
+        else return usernameAndPasswordDTO;
+        if(security.containsKey("security.enabled")) {
+            usernameAndPasswordDTO.setEnabled(Boolean.parseBoolean(security.get("security.enabled")));
+        }
+        if(security.containsKey("security.username")) {
+            usernameAndPasswordDTO.setUsername(security.get("security.username"));
+        }
+        if(security.containsKey("security.password")) {
+            usernameAndPasswordDTO.setPassword(security.get("security.password"));
+        }
+        return usernameAndPasswordDTO;
     }
 }

@@ -1,6 +1,5 @@
 package com.raspberry.camera;
 
-import oracle.jdbc.rowset.OracleSerialBlob;
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -72,6 +71,11 @@ public class PhotoService {
         capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, 1920);
         capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, 1080);
         capture.read(frame);
+    }
+
+    public static void release() {
+        capture.release();
+        capture = null;
     }
 
     public static void initialize() {

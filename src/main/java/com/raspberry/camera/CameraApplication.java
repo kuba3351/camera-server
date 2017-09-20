@@ -9,6 +9,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import java.io.IOException;
+
 @SpringBootApplication
 @EnableAutoConfiguration
 public class CameraApplication {
@@ -28,16 +30,17 @@ public class CameraApplication {
 		return connectionFactory;
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
+		CameraBlinking blinkingRunnable = new CameraBlinking();
+		Thread blinking = new Thread(blinkingRunnable);
+		blinking.start();
 		System.load("/usr/lib/jni/libopencv_java249.so");
 		SpringApplication.run(CameraApplication.class, args);
 		logger.info("Spring framework uruchomiony");
 		logger.info("Rozpoczynanie nasłuchiwania pakietów...");
 		Thread thread = new Thread(new AutoDiscoveryListener());
 		thread.start();
-		logger.info("Rozpoczynam test kamery...");
-		PhotoService.takeFirstPhoto();
-		logger.info("Test kamery zakończony.");
+		blinkingRunnable.finishBlibking();
 	}
 
 }
