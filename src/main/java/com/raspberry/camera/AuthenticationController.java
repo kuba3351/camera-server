@@ -51,13 +51,6 @@ public class AuthenticationController {
         return new ResponseEntity<>("Bad username or password", HttpStatus.FORBIDDEN);
     }
 
-    @GetMapping("/isAuthEnabled")
-    public UsernameAndPasswordDTO isAuthEnabled() {
-        UsernameAndPasswordDTO usernameAndPasswordDTO = new UsernameAndPasswordDTO();
-        usernameAndPasswordDTO.setEnabled(configFileService.getUsernameAndPasswordDTO().getEnabled());
-        return usernameAndPasswordDTO;
-    }
-
     @GetMapping("/api/saveAuthInfo")
     public ResponseEntity saveAuthInfo(@RequestBody UsernameAndPasswordDTO usernameAndPasswordDTO) throws IOException {
         configFileService.writeAuthInfo(usernameAndPasswordDTO);

@@ -41,4 +41,15 @@ public class SavingPlacesController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("api/connectToDatabase")
+    public ResponseEntity bringUpDatabaseConnection() {
+        try {
+            databaseService.setUpDatabaseSession(configFileService.getSavingPlacesDTO().getDatabaseConfig());
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.CONFLICT);
+        }
+    }
 }

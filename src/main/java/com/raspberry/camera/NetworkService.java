@@ -1,7 +1,6 @@
 package com.raspberry.camera;
 
 import org.apache.log4j.Logger;
-import org.omg.SendingContext.RunTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,46 +18,71 @@ public class NetworkService {
 
     private final static Logger logger = Logger.getLogger(NetworkService.class);
 
+    private Boolean isHotspotActive;
+
+    public Boolean getHotspotActive() {
+        return isHotspotActive;
+    }
 
     @Autowired
     public NetworkService(ConfigFileService configFileService) throws IOException, InterruptedException {
         this.configFileService = configFileService;
         this.networkDTO = configFileService.getNetworkDTO();
-        BufferedReader bufferedReader = checkActiveConnection();
-        if(bufferedReader.lines().map(Scanner::new).noneMatch(line -> line.next().equals(networkDTO.getSsid()))) {
+        if(!isConnectedTo(networkDTO.getSsid())) {
             logger.info("Połączenie nieaktywne. Próbuję łączyć według ustawień...");
-            String command = null;
-            String password = networkDTO.getPassword();
-            if(password == null || password.isEmpty())
-                command = "nmcli dev wifi connect "+networkDTO.getSsid();
-            else
-                command = "nmcli dev wifi connect "+networkDTO.getSsid()+" password "+password;
-            Process connecting = Runtime.getRuntime().exec(command);
-            connecting.waitFor();
-            BufferedReader reader2 = checkActiveConnection();
-            if(reader2.lines().map(Scanner::new).noneMatch(line -> line.next().equals(networkDTO.getSsid()))) {
+            if(!connectToNetwork(networkDTO)) {
                 logger.info("Nie udało się połączyć. Stawiam hotspota...");
-                Process hotspot = Runtime.getRuntime().exec("nmcli c up hotspot");
-                if(hotspot.waitFor() != 0)
-                    logger.error("Stawianie hotspota nieudane.");
-                else {
-                    logger.info("Hotspot postawiony!");
-                    Process dhcpcd = Runtime.getRuntime().exec("sudo systemctl start isc-dhcp-server");
-                    if(dhcpcd.waitFor() == 0)
-                        logger.info("DHCP postawiony!");
-                    else
-                        logger.error("Nie udało się postawić DHCP");
-                }
+                bringUpHotspot();
             }
         }
-        logger.info("Połączenie już nawiązane. Kontynuuję uruchamianie...");
+        else {
+            logger.info("Połączenie już nawiązane. Kontynuuję uruchamianie...");
+            isHotspotActive = false;
+        }
     }
 
-    private BufferedReader checkActiveConnection() throws IOException, InterruptedException {
+    public void bringUpHotspot() throws IOException, InterruptedException {
+        Process hotspot = Runtime.getRuntime().exec("nmcli c up hotspot");
+        if(hotspot.waitFor() != 0) {
+            logger.error("Stawianie hotspota nieudane.");
+            isHotspotActive = false;
+        }
+        else {
+            logger.info("Hotspot postawiony!");
+            Process dhcpcd = Runtime.getRuntime().exec("sudo systemctl start isc-dhcp-server");
+            if(dhcpcd.waitFor() == 0) {
+                logger.info("DHCP postawiony!");
+                isHotspotActive = true;
+            }
+            else {
+                logger.error("Nie udało się postawić DHCP");
+                isHotspotActive = false;
+            }
+        }
+    }
+
+    public Boolean connectToNetwork(NetworkDTO networkDTO) throws IOException, InterruptedException {
+        String password = networkDTO.getPassword();
+        String command = "nmcli dev wifi connect "+networkDTO.getSsid();
+        if(password != null && !password.isEmpty())
+            command += " password "+password;
+        Process connecting = Runtime.getRuntime().exec(command);
+        connecting.waitFor();
+        if(isConnectedTo(networkDTO.getSsid())) {
+            this.networkDTO = networkDTO;
+            isHotspotActive = false;
+            return true;
+        }
+        return false;
+    }
+
+    private Boolean isConnectedTo(String name) throws IOException, InterruptedException {
         logger.info("Sprawdzanie aktywnego połączenia...");
-        Process process = Runtime.getRuntime().exec("nmcli c show --active");
+        Process process = Runtime.getRuntime().exec("nmcli -f in-use,ssid dev wifi list");
         process.waitFor();
-        return new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        return reader.lines().filter(line -> line.startsWith("*"))
+                .map(line -> line.substring(1)).map(String::trim).anyMatch(line -> line.equals(name));
     }
 
     private NetworkViewDTO mapStringToViewDTO(String line) {

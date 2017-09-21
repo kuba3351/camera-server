@@ -70,7 +70,7 @@ public class ConfigFileService {
         return networkDTO;
     }
 
-    private void writeNetworkDTO(NetworkDTO networkDTO) throws IOException {
+    public void writeNetworkDTO(NetworkDTO networkDTO) throws IOException {
         file.put("Network", "network.ssid", networkDTO.getSsid());
         file.put("Network", "network.password", networkDTO.getPassword());
         file.store();

@@ -31,7 +31,6 @@ public class AutoDiscoveryListener implements Runnable {
                 if (message.equals("DISCOVER_FUIFSERVER_REQUEST")) {
                     byte[] sendData = "DISCOVER_FUIFSERVER_RESPONSE".getBytes();
 
-                    //Send a response
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
                     socket.send(sendPacket);
 
