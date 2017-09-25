@@ -24,7 +24,7 @@ public class PhotoController {
 
     private final static Logger logger = Logger.getLogger(PhotoController.class);
 
-    private static final int BUFFER_SIZE = 1000;
+    private final int BUFFER_SIZE = 1000;
 
     @GetMapping("/api/takePhoto")
     public void takePhoto(HttpServletResponse httpServletResponse) throws IOException {

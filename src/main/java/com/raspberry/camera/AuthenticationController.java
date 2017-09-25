@@ -56,4 +56,13 @@ public class AuthenticationController {
         configFileService.writeAuthInfo(usernameAndPasswordDTO);
         return new ResponseEntity(HttpStatus.OK);
     }
+
+    @GetMapping("/api/getAuthInfo")
+    public UsernameAndPasswordDTO getAuthInfo() {
+        UsernameAndPasswordDTO dtoFromConfig = configFileService.getUsernameAndPasswordDTO();
+        UsernameAndPasswordDTO responseDto = new UsernameAndPasswordDTO();
+        responseDto.setEnabled(dtoFromConfig.getEnabled());
+        responseDto.setUsername(dtoFromConfig.getUsername());
+        return responseDto;
+    }
 }

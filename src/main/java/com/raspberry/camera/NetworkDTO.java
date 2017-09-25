@@ -1,5 +1,7 @@
 package com.raspberry.camera;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class NetworkDTO {
     private String ssid;
     private String password;

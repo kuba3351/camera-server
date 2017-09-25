@@ -1,5 +1,7 @@
 package com.raspberry.camera;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class UsernameAndPasswordDTO {
     private Boolean isEnabled;
     private String username;

@@ -6,15 +6,18 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 @Service
 public class NetworkService {
 
-    ConfigFileService configFileService;
+    private ConfigFileService configFileService;
 
-    public NetworkDTO networkDTO;
+    private NetworkDTO networkDTO;
 
     private final static Logger logger = Logger.getLogger(NetworkService.class);
 
@@ -32,7 +35,7 @@ public class NetworkService {
             logger.info("Połączenie nieaktywne. Próbuję łączyć według ustawień...");
             if(!connectToNetwork(networkDTO)) {
                 logger.info("Nie udało się połączyć. Stawiam hotspota...");
-                bringUpHotspot();
+                enableHotspot();
             }
         }
         else {
@@ -41,7 +44,7 @@ public class NetworkService {
         }
     }
 
-    public void bringUpHotspot() throws IOException, InterruptedException {
+    public Boolean enableHotspot() throws IOException, InterruptedException {
         Process hotspot = Runtime.getRuntime().exec("nmcli c up hotspot");
         if(hotspot.waitFor() != 0) {
             logger.error("Stawianie hotspota nieudane.");
@@ -59,6 +62,7 @@ public class NetworkService {
                 isHotspotActive = false;
             }
         }
+        return isHotspotActive;
     }
 
     public Boolean connectToNetwork(NetworkDTO networkDTO) throws IOException, InterruptedException {
@@ -85,18 +89,36 @@ public class NetworkService {
                 .map(line -> line.substring(1)).map(String::trim).anyMatch(line -> line.equals(name));
     }
 
-    private NetworkViewDTO mapStringToViewDTO(String line) {
-        if(line.startsWith("*"))
-            line = line.substring(1);
-        Scanner scanner = new Scanner(line);
+    public List<NetworkViewDTO> checkAvailableNetworks() throws IOException, InterruptedException {
+        logger.info("Sprawdzanie dostępnych połączeń wifi...");
+        Process process = Runtime.getRuntime().exec("nmcli -f SSID,BARS,SECURITY -m multiline dev wifi list");
+        process.waitFor();
+        InputStream inputStream = process.getInputStream();
+        Scanner scanner = new Scanner(inputStream);
+        ArrayList<NetworkViewDTO> networkViewDTOS = new ArrayList<>();
+        int linesCount = 0;
         NetworkViewDTO networkViewDTO = new NetworkViewDTO();
-        networkViewDTO.setSsid(scanner.next());
-        networkViewDTO.setMode(scanner.next());
-        networkViewDTO.setChannel(scanner.nextInt());
-        networkViewDTO.setMark(scanner.next()+" "+scanner.next());
-        networkViewDTO.setSignal(scanner.nextInt());
-        networkViewDTO.setBars(scanner.next());
-        networkViewDTO.setSecurity(scanner.next());
-        return networkViewDTO;
+        while(scanner.hasNextLine()) {
+            linesCount++;
+            String id = scanner.next();
+            String value = scanner.nextLine().trim();
+            switch(id) {
+                case "SSID:":
+                    networkViewDTO.setSsid(value);
+                    break;
+                case "PASKI:":
+                    networkViewDTO.setBars(value);
+                    break;
+                case "ZABEZPIECZENIA:":
+                    networkViewDTO.setSecurity(value);
+                    break;
+                default: throw new RuntimeException("Problem ze sparsowaniem wyjścia.");
+            }
+            if(linesCount % 3 == 0) {
+                networkViewDTOS.add(networkViewDTO);
+                networkViewDTO = new NetworkViewDTO();
+            }
+        }
+        return networkViewDTOS;
     }
 }
