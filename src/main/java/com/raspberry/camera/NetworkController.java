@@ -28,7 +28,6 @@ public class NetworkController {
 
     @GetMapping("/api/network/getNetworkInfo")
     public NetworkDTO getNetworkInfo() {
-
         NetworkDTO networkDTOFromConfig = configFileService.getNetworkDTO();
         NetworkDTO responseNetworkDTO = new NetworkDTO();
         responseNetworkDTO.setSsid(networkDTOFromConfig.getSsid());
@@ -37,23 +36,42 @@ public class NetworkController {
 
     @PostMapping("/api/network/connectToNetwork")
     public ResponseEntity connectToNetwork(@RequestBody NetworkDTO networkDTO) throws IOException, InterruptedException {
-        if(networkService.connectToNetwork(networkDTO)) {
-            configFileService.writeNetworkDTO(networkDTO);
-            return new ResponseEntity(HttpStatus.OK);
-        }
-        if(networkService.getHotspotActive())
-            networkService.enableHotspot();
-        else
-            networkService.connectToNetwork(configFileService.getNetworkDTO());
-        return new ResponseEntity(HttpStatus.CONFLICT);
+        Thread thread = new Thread(() -> {
+            String password = networkDTO.getPassword();
+            if(password == null) {
+                networkDTO.setPassword(configFileService.getNetworkDTO().getPassword());
+            }
+            try {
+                if(networkService.connectToNetwork(networkDTO)) {
+                    configFileService.writeNetworkDTO(networkDTO);
+                }
+                if(networkService.getHotspotActive())
+                    networkService.enableHotspot();
+                else
+                    networkService.connectToNetwork(configFileService.getNetworkDTO());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+        Thread.sleep(5000);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @GetMapping("/api/network/enableHotspot")
-    public ResponseEntity enableHotspo() throws IOException, InterruptedException {
-        if(networkService.enableHotspot()) {
-            return new ResponseEntity(HttpStatus.OK);
-        }
-        return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity enableHotspot() throws IOException, InterruptedException {
+        Thread thread = new Thread(() -> {
+            try {
+                if (!networkService.enableHotspot()) {
+                    networkService.connectToNetwork(configFileService.getNetworkDTO());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+        Thread.sleep(5000);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @GetMapping("/api/network/checkAvailableWifi")

@@ -7,7 +7,7 @@ import java.io.File;
  */
 public class SavingPlacesDTO {
     private Boolean jpgComputerSave;
-    private File jpgComputerLocation;
+    private String jpgComputerLocation;
     private Boolean jpgRaspberryPendriveSave;
     private Boolean jpgDatabaseSave;
     private DatabaseConfigDTO databaseConfig;
@@ -22,11 +22,11 @@ public class SavingPlacesDTO {
         this.jpgComputerSave = jpgComputerSave;
     }
 
-    public File getJpgComputerLocation() {
+    public String getJpgComputerLocation() {
         return jpgComputerLocation;
     }
 
-    public void setJpgComputerLocation(File jpgComputerLocation) {
+    public void setJpgComputerLocation(String jpgComputerLocation) {
         this.jpgComputerLocation = jpgComputerLocation;
     }
 

@@ -170,7 +170,7 @@ public class ConfigFileService {
         if (savingPlaces.containsKey("savingPlaces.matDatabaseSave"))
             savingPlacesDTO.setMatDatabaseSave(Boolean.parseBoolean(file.get("SavingPlaces", "savingPlaces.matDatabaseSave")));
         if(savingPlaces.containsKey("savingPlaces.jpgLocation") && file.get("SavingPlaces", "jpgLocation") != null)
-            savingPlacesDTO.setJpgComputerLocation(new File(file.get("SavingPlaces", "jpgLocation")));
+            savingPlacesDTO.setJpgComputerLocation(file.get("SavingPlaces", "jpgLocation"));
         savingPlacesDTO.setDatabaseConfig(readDatabaseConfig());
         return savingPlacesDTO;
     }

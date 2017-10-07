@@ -15,7 +15,7 @@ public class UtilsController {
         response.getOutputStream().write(request.getRemoteAddr().getBytes());
     }
 
-    @GetMapping("/api/rebootServer")
+    @GetMapping("/rebootServer")
     public void reboot() throws InterruptedException {
         Thread thread = new Thread(() -> {
             try {
@@ -27,5 +27,4 @@ public class UtilsController {
         Thread.sleep(5000);
         thread.start();
     }
-
 }

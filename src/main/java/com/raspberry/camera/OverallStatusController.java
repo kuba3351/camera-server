@@ -23,6 +23,8 @@ public class OverallStatusController {
         overalStateDTO.setDatabaseEnabled(configFileService.getSavingPlacesDTO().getJpgDatabaseSave() || configFileService.getSavingPlacesDTO().getMatDatabaseSave());
         overalStateDTO.setHotspotEnabled(networkService.getHotspotActive());
         overalStateDTO.setSecurityEnabled(configFileService.getUsernameAndPasswordDTO().getEnabled());
+        overalStateDTO.setJpgComputerSaveEnabled(configFileService.getSavingPlacesDTO().getJpgComputerSave());
+        overalStateDTO.setJpgLocation(configFileService.getSavingPlacesDTO().getJpgComputerLocation());
         return overalStateDTO;
     }
 }

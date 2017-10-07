@@ -1,5 +1,7 @@
 package com.raspberry.camera;
 
+import java.io.File;
+
 public class OveralStateDTO {
     private Boolean securityEnabled;
     private Boolean databaseEnabled;
@@ -7,7 +9,24 @@ public class OveralStateDTO {
     private Boolean pendriveEnabled;
     private Boolean pendriveConnected;
     private Boolean hotspotEnabled;
+    private Boolean jpgComputerSaveEnabled;
+    private String jpgLocation;
 
+    public String getJpgLocation() {
+        return jpgLocation;
+    }
+
+    public void setJpgLocation(String jpgLocation) {
+        this.jpgLocation = jpgLocation;
+    }
+
+    public Boolean getJpgComputerSaveEnabled() {
+        return jpgComputerSaveEnabled;
+    }
+
+    public void setJpgComputerSaveEnabled(Boolean jpgComputerSaveEnabled) {
+        this.jpgComputerSaveEnabled = jpgComputerSaveEnabled;
+    }
 
     public Boolean getSecurityEnabled() {
         return securityEnabled;

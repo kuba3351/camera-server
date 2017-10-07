@@ -25,14 +25,37 @@ public class SavingPlacesController {
 
     @GetMapping("/api/savingPlaces")
     public SavingPlacesDTO getSavingPlaces() {
-        return configFileService.getSavingPlacesDTO();
+        SavingPlacesDTO outputDto = new SavingPlacesDTO();
+        DatabaseConfigDTO outputDatabaseConfig = new DatabaseConfigDTO();
+        SavingPlacesDTO savingPlacesDTO = configFileService.getSavingPlacesDTO();
+        DatabaseConfigDTO databaseConfigDTO = savingPlacesDTO.getDatabaseConfig();
+        outputDto.setDatabaseConfig(outputDatabaseConfig);
+        outputDto.setJpgComputerSave(savingPlacesDTO.getJpgComputerSave());
+        outputDto.setJpgComputerLocation(savingPlacesDTO.getJpgComputerLocation());
+        outputDto.setJpgDatabaseSave(savingPlacesDTO.getJpgDatabaseSave());
+        outputDto.setJpgRaspberryPendriveSave(savingPlacesDTO.getJpgRaspberryPendriveSave());
+        outputDto.setMatDatabaseSave(savingPlacesDTO.getMatDatabaseSave());
+        outputDto.setMatPendriveSave(savingPlacesDTO.getMatPendriveSave());
+        outputDatabaseConfig.setHost(databaseConfigDTO.getHost());
+        outputDatabaseConfig.setPort(databaseConfigDTO.getPort());
+        outputDatabaseConfig.setDatabaseType(databaseConfigDTO.getDatabaseType());
+        outputDatabaseConfig.setDatabaseName(databaseConfigDTO.getDatabaseName());
+        outputDatabaseConfig.setUser(databaseConfigDTO.getUser());
+        return outputDto;
     }
 
     @PostMapping("/api/savingPlaces")
     public ResponseEntity updateSavingPlacesConfig(@RequestBody SavingPlacesDTO savingPlacesDTO) {
         try {
             logger.info("Uaktualniam konfigurację miejsc zapisu...");
-            databaseService.setUpDatabaseSession(savingPlacesDTO.getDatabaseConfig());
+            String password = savingPlacesDTO.getDatabaseConfig().getPassword();
+            if(password == null) {
+                savingPlacesDTO.getDatabaseConfig()
+                        .setPassword(configFileService.getSavingPlacesDTO()
+                                .getDatabaseConfig().getPassword());
+            }
+            if(savingPlacesDTO.getJpgDatabaseSave() || savingPlacesDTO.getMatDatabaseSave())
+                databaseService.setUpDatabaseSession(savingPlacesDTO.getDatabaseConfig());
             configFileService.writeSavingPlaces(savingPlacesDTO);
             logger.info("Uaktualnianie akończone...");
             return new ResponseEntity(HttpStatus.OK);

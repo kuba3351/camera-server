@@ -51,8 +51,14 @@ public class AuthenticationController {
         return new ResponseEntity<>("Bad username or password", HttpStatus.FORBIDDEN);
     }
 
-    @GetMapping("/api/saveAuthInfo")
+    @PostMapping("/api/saveAuthInfo")
     public ResponseEntity saveAuthInfo(@RequestBody UsernameAndPasswordDTO usernameAndPasswordDTO) throws IOException {
+        String password = usernameAndPasswordDTO.getPassword();
+        if(password == null) {
+            usernameAndPasswordDTO
+                    .setPassword(configFileService.getUsernameAndPasswordDTO()
+                            .getPassword());
+        }
         configFileService.writeAuthInfo(usernameAndPasswordDTO);
         return new ResponseEntity(HttpStatus.OK);
     }
