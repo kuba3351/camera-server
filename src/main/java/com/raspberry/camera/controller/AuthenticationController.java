@@ -85,6 +85,7 @@ public class AuthenticationController {
 
     @GetMapping("/api/getAuthInfo")
     public UsernameAndPasswordDTO getAuthInfo() {
+        logger.info("Żądanie pobrania ustawień autentykacji...");
         UsernameAndPasswordDTO dtoFromConfig = configFileService.getUsernameAndPasswordDTO();
         UsernameAndPasswordDTO responseDto = new UsernameAndPasswordDTO();
         responseDto.setEnabled(dtoFromConfig.getEnabled());

@@ -40,7 +40,8 @@ public class CameraApplication {
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
 		container.setConnectionFactory(connectionFactory);
 		container.setQueueNames("test2");
-		container.setMessageListener(new MessageListenerAdapter(new RabbitReceiver(), "receive"));
+		RabbitReceiver receiver = new RabbitReceiver();
+		container.setMessageListener(new MessageListenerAdapter(receiver, "receive"));
 		container.setAcknowledgeMode(AcknowledgeMode.AUTO);
 		return container;
 	}

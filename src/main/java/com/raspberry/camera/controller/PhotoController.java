@@ -50,8 +50,8 @@ public class PhotoController {
     public void takePhoto(HttpServletResponse httpServletResponse) throws IOException, ExecutionException, InterruptedException {
         logger.info("odebrano żądanie wykonania zdjęcia...");
         ExecutorService service = Executors.newFixedThreadPool(2);
-        Photo photo1 = photoService.getCameras() > 0 ? photoService.takePhoto(0) : null;
-        Photo photo2 = photoService.getCameras() > 1 ? photoService.takePhoto(1) : null;
+        Photo photo1 = new File("/dev/video0").exists() ? photoService.takePhoto(0) : null;
+        Photo photo2 = new File("/dev/video1").exists() ? photoService.takePhoto(1) : null;
         photos.put("camera1", photo1);
         photos.put("camera2", photo2);
         makeZipArchive(httpServletResponse, photo1, photo2);

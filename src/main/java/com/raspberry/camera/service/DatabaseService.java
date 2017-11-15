@@ -1,9 +1,9 @@
 package com.raspberry.camera.service;
 
 import com.raspberry.camera.entity.JpgImageEntity;
+import com.raspberry.camera.entity.MatEntity;
 import com.raspberry.camera.entity.MatImageEntity;
 import com.raspberry.camera.dto.DatabaseConfigDTO;
-import com.raspberry.camera.entity.Matrix;
 import com.raspberry.camera.entity.Photo;
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
@@ -11,13 +11,12 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfInt;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.sql.Blob;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 /**
  * Created by jakub on 17.08.17.
@@ -48,8 +47,7 @@ public class DatabaseService {
         logger.info("Łączę z bazą...");
         Configuration configuration = new Configuration()
                 .addAnnotatedClass(JpgImageEntity.class)
-                .addAnnotatedClass(MatImageEntity.class)
-                .addAnnotatedClass(Matrix.class);
+                .addAnnotatedClass(MatImageEntity.class);
         switch (databaseConfigDTO.getDatabaseType()) {
             case MYSQL:
                 configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
@@ -98,49 +96,67 @@ public class DatabaseService {
         if(databaseSession == null || !databaseSession.isOpen()) {
             setUpDatabaseSession(databaseConfigDTO);
         }
-        byte[][][] image1 = new byte[3][mat.rows()][mat.cols()];
-        byte[][][] image2 = new byte[3][mat.rows()][mat.cols()];
-        for(int i = 0;i<mat.rows();i++) {
-            for (int j = 0; j < mat.cols(); j++) {
-                byte[] buffer = new byte[3];
-                mat.get(i, j, buffer);
-                image1[0][i][j] = buffer[0];
-                image1[1][i][j] = buffer[1];
-                image1[2][i][j] = buffer[2];
-            }
-        }
-        for(int i = 0;i<mat2.rows();i++) {
-            for (int j = 0; j < mat2.cols(); j++) {
-                byte[] buffer = new byte[3];
-                mat2.get(i, j, buffer);
-                image2[0][i][j] = buffer[0];
-                image2[1][i][j] = buffer[1];
-                image2[2][i][j] = buffer[2];
-            }
-        }
+        int[] tab1 = new int[(int)mat.total() * mat.channels()];
+        copyTab(mat, tab1);
+        int[] tab2 = new int[(int)mat2.total() * mat2.channels()];
+        copyTab(mat2, tab2);
+        MatEntity matEntity1 = new MatEntity();
+        matEntity1.setCols(mat.cols());
+        matEntity1.setRows(mat.rows());
+        matEntity1.setData(tab1);
+        ByteArrayOutputStream outputStream = writeMat(matEntity1);
+        MatEntity matEntity2 = new MatEntity();
+        matEntity2.setRows(mat2.rows());
+        matEntity2.setCols(mat2.cols());
+        matEntity2.setData(tab2);
+        ByteArrayOutputStream outputStream2 = writeMat(matEntity2);
         MatImageEntity matImageEntity = new MatImageEntity();
-        matImageEntity.setTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        matImageEntity.setTime(now);
+        matImageEntity.setImage(outputStream.toByteArray());
         Transaction transaction = databaseSession.beginTransaction();
         databaseSession.save(matImageEntity);
+        logger.info("Zapisano macierz 1");
+        MatImageEntity matImageEntity2 = new MatImageEntity();
+        matImageEntity2.setTime(now);
+        matImageEntity2.setImage(outputStream2.toByteArray());
         transaction.commit();
-        for(int i = 0;i<2;i++) {
-            byte[][] table = null;
-            for(int j = 0;j<3;j++) {
-                if(i == 0)
-                    table = image1[j];
-                if(i == 1)
-                    table = image2[j];
-                transaction = databaseSession.beginTransaction();
-                Matrix matrix = new Matrix();
-                matrix.setCamera(i + 1);
-                matrix.setChannel(j + 1);
-                matrix.setMatrix(table);
-                matrix.setImage(matImageEntity);
-                logger.info("Zapisuję: obraz:"+(i+1)+" kanał:"+(j+1));
-                databaseSession.save(matrix);
-                transaction.commit();
+        logger.info("Macierz 2 zapisana.");
+    }
+
+    private void copyTab(Mat mat, int[] tab1) {
+        int z = 0;
+        for(int i = 0;i<mat.rows();i++) {
+            for (int j = 0; j < mat.cols(); j++) {
+                double[] temp = mat.get(i, j);
+                for(int k = 0;k<temp.length;k++) {
+                    tab1[z++] = (int)temp[k];
+                }
             }
         }
-        logger.info("Macierz zapisana.");
+    }
+
+    private ByteArrayOutputStream writeMat(MatEntity matEntity) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        StringBuilder builder = new StringBuilder();
+        builder.append("%");
+        builder.append("YAML:1.0\n" +
+                "---\n" +
+                "Matrix: !!opencv-matrix\n" +
+                "   rows: "+matEntity.getRows()+"\n" +
+                "   cols: "+matEntity.getCols()+"\n" +
+                "   dt: \"3u\"\n" +
+                "   data: [ ");
+        int[] data = matEntity.getData();
+        for(int i = 0; i<data.length; i++) {
+            builder.append(data[i]);
+            if(i != data.length - 1)
+                builder.append(", ");
+            if(i % 10 == 0 && i>5)
+                builder.append("\n      ");
+        }
+        builder.append("]");
+        outputStream.write(builder.toString().getBytes());
+        return outputStream;
     }
 }

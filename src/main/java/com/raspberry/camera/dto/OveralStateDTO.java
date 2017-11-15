@@ -8,9 +8,27 @@ public class OveralStateDTO {
     private Boolean databaseConnected;
     private Boolean pendriveEnabled;
     private Boolean pendriveConnected;
+    private Boolean pendriveMounted;
     private Boolean hotspotEnabled;
     private Boolean jpgComputerSaveEnabled;
     private String jpgLocation;
+    private Integer cameras;
+
+    public Boolean getPendriveMounted() {
+        return pendriveMounted;
+    }
+
+    public void setPendriveMounted(Boolean pendriveMounted) {
+        this.pendriveMounted = pendriveMounted;
+    }
+
+    public Integer getCameras() {
+        return cameras;
+    }
+
+    public void setCameras(Integer cameras) {
+        this.cameras = cameras;
+    }
 
     public String getJpgLocation() {
         return jpgLocation;

@@ -1,6 +1,4 @@
-package com.raspberry.camera.entity;
-
-import org.opencv.core.Mat;
+package com.raspberry.camera.entity;;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -18,6 +16,27 @@ public class MatImageEntity {
     @GeneratedValue
     private Long id;
 
+    private int camera;
+
+    public int getCamera() {
+        return camera;
+    }
+
+    public void setCamera(int camera) {
+        this.camera = camera;
+    }
+
+    @Lob
+    private byte[] image;
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
+
     private LocalDateTime time;
 
     public Long getId() {
@@ -29,7 +48,6 @@ public class MatImageEntity {
     }
 
     public void setId(Long id) {
-
         this.id = id;
     }
 

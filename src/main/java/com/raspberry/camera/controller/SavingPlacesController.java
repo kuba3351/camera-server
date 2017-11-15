@@ -35,6 +35,7 @@ public class SavingPlacesController {
 
     @GetMapping("/api/savingPlaces")
     public SavingPlacesDTO getSavingPlaces() {
+        logger.info("Żądanie pobrania konfiguracji miejsc zapisu...");
         SavingPlacesDTO outputDto = new SavingPlacesDTO();
         DatabaseConfigDTO outputDatabaseConfig = new DatabaseConfigDTO();
         SavingPlacesDTO savingPlacesDTO = configFileService.getSavingPlacesDTO();

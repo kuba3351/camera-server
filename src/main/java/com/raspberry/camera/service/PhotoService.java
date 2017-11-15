@@ -15,30 +15,12 @@ import java.io.FileNotFoundException;
 @Component
 public class PhotoService {
 
-    private final static Logger logger = Logger.getLogger(PhotoService.class);
-
-    private int cameras;
-
-    public int getCameras() {
-        return cameras;
-    }
-
-    public PhotoService() {
-        cameras = 0;
-        logger.info("Rozpoczynam wykrywanie podłączonych kamer...");
-        if(new File("/dev/video0").exists())
-            cameras++;
-        if(new File("/dev/video1").exists())
-            cameras++;
-        logger.info("Liczba wykrytych kamer:"+cameras);
-    }
-
     public Photo takePhoto(int camera) throws FileNotFoundException {
         VideoCapture capture = new VideoCapture(camera);
         capture.open(camera);
         Mat frame = new Mat();
-        capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, 1280);
-        capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, 720);
+        capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, 1366);
+        capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, 768);
         capture.read(frame);
         MatOfByte matOfByte = new MatOfByte();
         Highgui.imencode(".jpg", frame, matOfByte);

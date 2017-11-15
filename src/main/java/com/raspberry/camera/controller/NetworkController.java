@@ -36,6 +36,7 @@ public class NetworkController {
 
     @GetMapping("/api/network/getNetworkInfo")
     public NetworkDTO getNetworkInfo() {
+        logger.info("Żądanie pobrania ustawień sieci...");
         NetworkDTO networkDTOFromConfig = configFileService.getNetworkDTO();
         NetworkDTO responseNetworkDTO = new NetworkDTO();
         responseNetworkDTO.setSsid(networkDTOFromConfig.getSsid());

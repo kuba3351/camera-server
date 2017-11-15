@@ -31,6 +31,46 @@
 			<version>0.5.1</version>
 		</dependency>
 		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>robot</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>commons-cli</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>dbusjava</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>ev3classes</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>ev3tools</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>jcommon</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>jfreechart</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.raspberry</groupId>
+			<artifactId>jsch</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-amqp</artifactId>
 			<version>1.5.6.RELEASE</version>

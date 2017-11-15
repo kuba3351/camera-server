@@ -137,15 +137,15 @@ public class ConfigFileService {
             }
         }
         if (databaseSection.containsKey("database.host"))
-            databaseConfigDTO.setHost(file.get("Database", "database.host"));
+            databaseConfigDTO.setHost(databaseSection.get("database.host"));
         if (databaseSection.containsKey("database.port"))
-            databaseConfigDTO.setPort(Integer.parseInt(file.get("Database", "database.port")));
+            databaseConfigDTO.setPort(Integer.parseInt(databaseSection.get("database.port")));
         if (databaseSection.containsKey("database.name"))
-            databaseConfigDTO.setDatabaseName(file.get("Database", "database.name"));
+            databaseConfigDTO.setDatabaseName(databaseSection.get("database.name"));
         if (databaseSection.containsKey("database.login"))
-            databaseConfigDTO.setUser(file.get("Database", "database.login"));
+            databaseConfigDTO.setUser(databaseSection.get("database.login"));
         if (databaseSection.containsKey("database.password"))
-            databaseConfigDTO.setPassword(file.get("Database", "database.password"));
+            databaseConfigDTO.setPassword(databaseSection.get("database.password"));
         return databaseConfigDTO;
     }
 
@@ -166,17 +166,17 @@ public class ConfigFileService {
             savingPlaces = file.get("SavingPlaces");
         else return savingPlacesDTO;
         if (savingPlaces.containsKey("savingPlaces.jpgComputerSave"))
-            savingPlacesDTO.setJpgComputerSave(Boolean.parseBoolean(file.get("savingPlaces", "savingPlaces.jpgComputerSave")));
+            savingPlacesDTO.setJpgComputerSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgComputerSave")));
         if (savingPlaces.containsKey("savingPlaces.jpgRaspberryPendriveSave"))
-            savingPlacesDTO.setJpgRaspberryPendriveSave(Boolean.parseBoolean(file.get("savingPlaces", "savingPlaces.jpgRaspberryPendriveSave")));
+            savingPlacesDTO.setJpgRaspberryPendriveSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgRaspberryPendriveSave")));
         if (savingPlaces.containsKey("savingPlaces.jpgDatabaseSave"))
-            savingPlacesDTO.setJpgDatabaseSave(Boolean.parseBoolean(file.get("savingPlaces", "savingPlaces.jpgDatabaseSave")));
+            savingPlacesDTO.setJpgDatabaseSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgDatabaseSave")));
         if (savingPlaces.containsKey("savingPlaces.matPendriveSave"))
-            savingPlacesDTO.setMatPendriveSave(Boolean.parseBoolean(file.get("savingPlaces", "savingPlaces.matPendriveSave")));
+            savingPlacesDTO.setMatPendriveSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.matPendriveSave")));
         if (savingPlaces.containsKey("savingPlaces.matDatabaseSave"))
-            savingPlacesDTO.setMatDatabaseSave(Boolean.parseBoolean(file.get("savingPlaces", "savingPlaces.matDatabaseSave")));
-        if(savingPlaces.containsKey("savingPlaces.jpgLocation") && file.get("savingPlaces", "jpgLocation") != null)
-            savingPlacesDTO.setJpgComputerLocation(file.get("savingPlaces", "jpgLocation"));
+            savingPlacesDTO.setMatDatabaseSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.matDatabaseSave")));
+        if(savingPlaces.containsKey("savingPlaces.jpgLocation") && savingPlaces.get("savingPlaces.jpgLocation") != null)
+            savingPlacesDTO.setJpgComputerLocation(savingPlaces.get("savingPlaces.jpgLocation"));
         savingPlacesDTO.setDatabaseConfig(readDatabaseConfig());
         return savingPlacesDTO;
     }
