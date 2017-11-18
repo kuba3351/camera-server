@@ -18,6 +18,16 @@ import java.util.Scanner;
 public class NetworkService {
 
     private NetworkDTO networkDTO;
+    private ConfigFileService configFileService;
+
+    public NetworkDTO getNetworkDTO() {
+        return networkDTO;
+    }
+
+    public void setNetworkDTO(NetworkDTO networkDTO) throws IOException {
+        this.networkDTO = networkDTO;
+        configFileService.writeNetworkDTO(networkDTO);
+    }
 
     private final static Logger logger = Logger.getLogger(NetworkService.class);
 
@@ -29,6 +39,7 @@ public class NetworkService {
 
     @Autowired
     public NetworkService(ConfigFileService configFileService) throws IOException, InterruptedException {
+        this.configFileService = configFileService;
         this.networkDTO = configFileService.getNetworkDTO();
         if(networkDTO.getHotspot())
             enableHotspot();

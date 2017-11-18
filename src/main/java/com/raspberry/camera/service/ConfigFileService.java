@@ -23,12 +23,14 @@ public class ConfigFileService {
     private UsernameAndPasswordDTO usernameAndPasswordDTO;
     private NetworkDTO networkDTO;
 
-    public NetworkDTO getNetworkDTO() {
-        return networkDTO;
+    public PhotoResolutionDTO getPhotoResolutionDTO() {
+        return photoResolutionDTO;
     }
 
-    public void setNetworkDTO(NetworkDTO networkDTO) {
-        this.networkDTO = networkDTO;
+    private PhotoResolutionDTO photoResolutionDTO;
+
+    public NetworkDTO getNetworkDTO() {
+        return networkDTO;
     }
 
     public UsernameAndPasswordDTO getUsernameAndPasswordDTO() {
@@ -39,11 +41,8 @@ public class ConfigFileService {
 
     private final static Logger logger = Logger.getLogger(ConfigFileService.class);
 
-    private DatabaseService databaseService;
-
     @Autowired
-    public ConfigFileService(DatabaseService databaseService) throws Exception {
-        this.databaseService = databaseService;
+    public ConfigFileService() throws Exception {
         logger.info("Otwieranie pliku konfiguracyjnego...");
         File config = new File("/home/pi/server.ini");
         if (!config.exists())
@@ -53,12 +52,39 @@ public class ConfigFileService {
         timeDTO = readTimeConfig();
         logger.info("Wczytywanie konfiguracji miejsc zapisu...");
         savingPlacesDTO = readSavingPlaces();
-        databaseService.setDatabaseConfigDTO(savingPlacesDTO.getDatabaseConfig());
         logger.info("Wczytywanie konfiguracji zabezpieczeń...");
         usernameAndPasswordDTO = readUsernameAndPasswordDTOFromFile();
         logger.info("Wczytywanie konfiguracji sieci...");
         networkDTO = readNetworkDTO();
+        logger.info("Wczytywanie konfiguracji rozdzielczości...");
+        photoResolutionDTO = readPhotoResolution();
         logger.info("Zakończono wczytywanie konfiguracji.");
+    }
+
+    public String readRobotIp() {
+        return file.get("Robot", "robot.ipAddress");
+    }
+
+    public void saveRobotIp(String ip) throws IOException {
+        file.put("Robot", "robot.ipAddress", ip);
+        file.store();
+    }
+
+    public PhotoResolutionDTO readPhotoResolution() {
+        PhotoResolutionDTO photoResolutionDTO = new PhotoResolutionDTO();
+        Profile.Section photo = file.get("Photo");
+        if(photo.containsKey("photo.width"))
+            photoResolutionDTO.setWidth(Integer.parseInt(photo.get("photo.width")));
+        if(photo.containsKey("photo.height"))
+            photoResolutionDTO.setHeigth(Integer.parseInt(photo.get("photo.height")));
+        return photoResolutionDTO;
+    }
+
+    public void savePhotoResolution(PhotoResolutionDTO photoResolutionDTO) throws IOException {
+        file.put("Photo", "photo.width", photoResolutionDTO.getWidth());
+        file.put("Photo", "photo.height", photoResolutionDTO.getHeigth());
+        file.store();
+        this.photoResolutionDTO = photoResolutionDTO;
     }
 
     private NetworkDTO readNetworkDTO() {
@@ -126,9 +152,6 @@ public class ConfigFileService {
                 case "POSTGRES":
                     databaseConfigDTO.setDatabaseType(DatabaseType.POSTGRES);
                     break;
-                case "ORACLE":
-                    databaseConfigDTO.setDatabaseType(DatabaseType.ORACLE);
-                    break;
                 case "MYSQL":
                     databaseConfigDTO.setDatabaseType(DatabaseType.MYSQL);
                     break;
@@ -183,7 +206,7 @@ public class ConfigFileService {
 
     public void writeSavingPlaces(SavingPlacesDTO savingPlacesDTO) throws IOException {
         file.put("SavingPlaces","savingPlaces.jpgComputerSave",savingPlacesDTO.getJpgComputerSave().toString());
-        file.put("SavingPlaces","savingPlaces.jpgRaspberryPendriveSave", savingPlacesDTO.getJpgRaspberryPendriveSave().toString());
+        file.put("SavingPlaces","savingPlaces.jpgRaspberryPendriveSave", savingPlacesDTO.getJpgPendriveSave().toString());
         file.put("SavingPlaces","savingPlaces.jpgDatabaseSave",savingPlacesDTO.getJpgDatabaseSave().toString());
         file.put("SavingPlaces","savingPlaces.jpgLocation",savingPlacesDTO.getJpgComputerLocation());
         file.put("SavingPlaces","savingPlaces.matPendriveSave",savingPlacesDTO.getMatPendriveSave().toString());

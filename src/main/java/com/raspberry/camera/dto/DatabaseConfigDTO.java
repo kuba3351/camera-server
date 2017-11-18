@@ -86,10 +86,6 @@ public class DatabaseConfigDTO {
                 url.append("mysql://");
                 portNameSeparator = "/";
                 break;
-            case ORACLE:
-                url.append("oracle:thin:@");
-                portNameSeparator = ":";
-                break;
             case POSTGRES:
                 url.append("postgresql://");
                 portNameSeparator = "/";

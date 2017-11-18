@@ -1,8 +1,7 @@
 package com.raspberry.camera.controller;
 
 import com.raspberry.camera.entity.TimeThreadState;
-import com.raspberry.camera.service.ConfigFileService;
-import com.raspberry.camera.service.TimerThread;
+import com.raspberry.camera.service.TimerService;
 import com.raspberry.camera.dto.TimeDTO;
 import com.raspberry.camera.service.PhotoService;
 import com.raspberry.camera.service.RabbitSender;
@@ -26,29 +25,27 @@ public class TimeController {
 
     private PhotoService photoService;
 
-    private ConfigFileService configFileService;
-
     private final static Logger logger = Logger.getLogger(TimeController.class);
 
     private Thread timeThread;
+    private TimerService timerService;
 
     private RabbitSender rabbitSender;
     private TimeDTO timer;
     private PhotoController photoController;
 
     @Autowired
-    public TimeController(PhotoService photoService, ConfigFileService configFileService, RabbitSender rabbitSender, PhotoController photoController) throws IOException {
+    public TimeController(PhotoService photoService, RabbitSender rabbitSender, PhotoController photoController, TimerService timerService) throws IOException {
         this.photoService = photoService;
-        this.configFileService = configFileService;
         this.rabbitSender = rabbitSender;
         this.photoController = photoController;
-        timer = configFileService.getTimeDTO();
-        timeThread = new Thread(new TimerThread(timer, rabbitSender, photoService, configFileService, photoController));
+        timeThread = new Thread(timerService);
+        this.timerService = timerService;
     }
 
     @GetMapping("/api/time")
     public TimeDTO getTimeInfo() {
-        return configFileService.getTimeDTO();
+        return timerService.getTimer();
     }
 
     @PostMapping("/api/time")
@@ -57,11 +54,11 @@ public class TimeController {
         Thread thread = new Thread(() -> {
             try {
                 timeDTO.reset();
-                configFileService.writeTimeToConfigFile(timeDTO.toString());
-                logger.info("Przetworzono żądanie ustawienia czasomierza. Czasomierz ustawiony na: "+configFileService.getTimeDTO().toString());
-                configFileService.getTimeDTO().setTimeThreadState(TimeThreadState.NEW);
-                timer = configFileService.getTimeDTO();
-                timeThread = new Thread(new TimerThread(timer, rabbitSender, photoService, configFileService, photoController));
+                timerService.setTimer(timeDTO);
+                logger.info("Przetworzono żądanie ustawienia czasomierza. Czasomierz ustawiony na: "+timeDTO.toString());
+                timer.setTimeThreadState(TimeThreadState.NEW);
+                this.timer = timeDTO;
+                timeThread = new Thread(timerService);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -77,17 +74,17 @@ public class TimeController {
         else
             timeThread.resume();
         logger.info("Przetworzono żądanie uruchomienia czasomierza.");
-        configFileService.getTimeDTO().setTimeThreadState(TimeThreadState.RUNNING);
+        timerService.getTimer().setTimeThreadState(TimeThreadState.RUNNING);
         return new ResponseEntity(HttpStatus.OK);
     }
 
     @GetMapping("/api/time/stop")
     public ResponseEntity stop() throws Exception {
         logger.info("Odebrano żądanie wtrzymania czasomierza.");
-        if(configFileService.getTimeDTO().getTimeThreadState().equals(TimeThreadState.RUNNING))
+        if(timerService.getTimer().getTimeThreadState().equals(TimeThreadState.RUNNING))
             timeThread.suspend();
         logger.info("Przetworzono żądanie wstrzymania czasomierza.");
-        configFileService.getTimeDTO().setTimeThreadState(TimeThreadState.SUSPENDED);
+        timerService.getTimer().setTimeThreadState(TimeThreadState.SUSPENDED);
         return new ResponseEntity(HttpStatus.OK);
     }
 

@@ -1,16 +1,13 @@
 package com.raspberry.camera.service;
 
-import org.springframework.stereotype.Component;
-
 import java.rmi.RemoteException;
 
-@Component
 public class RabbitReceiver {
 
     private final RobotService robotService;
 
-    public RabbitReceiver() {
-        this.robotService = RobotService.getInstance();
+    public RabbitReceiver(RobotService robotService) {
+        this.robotService = robotService;
     }
 
     public void receive(byte[] str) {

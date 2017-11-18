@@ -1,7 +1,9 @@
 package com.raspberry.camera;
 
 import com.raspberry.camera.service.AutoDiscoveryListener;
+import com.raspberry.camera.service.ConfigFileService;
 import com.raspberry.camera.service.RabbitReceiver;
+import com.raspberry.camera.service.RobotService;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Queue;
@@ -23,6 +25,11 @@ public class CameraApplication {
 	private final static Logger logger = Logger.getLogger(CameraApplication.class);
 
 	@Bean
+	public RobotService robotService(ConfigFileService configFileService) {
+		return new RobotService(configFileService);
+	}
+
+	@Bean
 	public Queue queue() {
 		return new Queue("test");
 	}
@@ -36,12 +43,21 @@ public class CameraApplication {
 	}
 
 	@Bean
-	public SimpleMessageListenerContainer container(ConnectionFactory connectionFactory) {
+	public RabbitReceiver rabbitReceiver(RobotService robotService) {
+		return new RabbitReceiver(robotService);
+	}
+
+	@Bean
+	public MessageListenerAdapter messageListenerAdapter(RabbitReceiver receiver) {
+		return new MessageListenerAdapter(receiver, "receive");
+	}
+
+	@Bean
+	public SimpleMessageListenerContainer container(ConnectionFactory connectionFactory, MessageListenerAdapter messageListenerAdapter) {
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
 		container.setConnectionFactory(connectionFactory);
 		container.setQueueNames("test2");
-		RabbitReceiver receiver = new RabbitReceiver();
-		container.setMessageListener(new MessageListenerAdapter(receiver, "receive"));
+		container.setMessageListener(messageListenerAdapter);
 		container.setAcknowledgeMode(AcknowledgeMode.AUTO);
 		return container;
 	}
@@ -54,7 +70,5 @@ public class CameraApplication {
 		logger.info("Rozpoczynanie nasłuchiwania pakietów...");
 		Thread thread = new Thread(new AutoDiscoveryListener());
 		thread.start();
-		//blinkingRunnable.finishBlibking();
 	}
-
 }

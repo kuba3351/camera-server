@@ -1,7 +1,5 @@
 package com.raspberry.camera.dto;
 
-import java.io.File;
-
 public class OveralStateDTO {
     private Boolean securityEnabled;
     private Boolean databaseEnabled;
@@ -13,6 +11,15 @@ public class OveralStateDTO {
     private Boolean jpgComputerSaveEnabled;
     private String jpgLocation;
     private Integer cameras;
+    private Boolean robotConnected;
+
+    public Boolean getRobotConnected() {
+        return robotConnected;
+    }
+
+    public void setRobotConnected(Boolean robotConnected) {
+        this.robotConnected = robotConnected;
+    }
 
     public Boolean getPendriveMounted() {
         return pendriveMounted;

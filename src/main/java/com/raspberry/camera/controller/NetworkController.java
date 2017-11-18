@@ -20,24 +20,19 @@ import java.util.List;
 @RestController
 public class NetworkController {
 
-    private ConfigFileService configFileService;
-
     private NetworkService networkService;
-
-    private final int BUFFER_SIZE = 1000;
 
     private final static Logger logger = Logger.getLogger(NetworkController.class);
 
     @Autowired
-    public NetworkController(ConfigFileService configFileService, NetworkService networkService) {
-        this.configFileService = configFileService;
+    public NetworkController(NetworkService networkService) {
         this.networkService = networkService;
     }
 
     @GetMapping("/api/network/getNetworkInfo")
     public NetworkDTO getNetworkInfo() {
         logger.info("Żądanie pobrania ustawień sieci...");
-        NetworkDTO networkDTOFromConfig = configFileService.getNetworkDTO();
+        NetworkDTO networkDTOFromConfig = networkService.getNetworkDTO();
         NetworkDTO responseNetworkDTO = new NetworkDTO();
         responseNetworkDTO.setSsid(networkDTOFromConfig.getSsid());
         return responseNetworkDTO;
@@ -45,7 +40,7 @@ public class NetworkController {
 
     @PostMapping("/api/network")
     public ResponseEntity connectToNetwork(@RequestBody @Valid NetworkDTO networkDTO) throws IOException, InterruptedException {
-        configFileService.writeNetworkDTO(networkDTO);
+        networkService.setNetworkDTO(networkDTO);
         logger.info("Zmieniono ustawień sieci. Wymagany restart.");
         return new ResponseEntity(HttpStatus.OK);
     }

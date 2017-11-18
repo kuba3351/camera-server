@@ -4,6 +4,7 @@ import com.raspberry.camera.dto.DatabaseConfigDTO;
 import com.raspberry.camera.service.ConfigFileService;
 import com.raspberry.camera.service.DatabaseService;
 import com.raspberry.camera.dto.SavingPlacesDTO;
+import com.raspberry.camera.service.SavingPlacesService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,14 +24,13 @@ public class SavingPlacesController {
 
     private final static Logger logger = Logger.getLogger(SavingPlacesController.class);
 
-    private ConfigFileService configFileService;
-
     private DatabaseService databaseService;
+    private SavingPlacesService savingPlacesService;
 
     @Autowired
-    public SavingPlacesController(ConfigFileService configFileService, DatabaseService databaseService) {
-        this.configFileService = configFileService;
+    public SavingPlacesController(DatabaseService databaseService, SavingPlacesService savingPlacesService) {
         this.databaseService = databaseService;
+        this.savingPlacesService = savingPlacesService;
     }
 
     @GetMapping("/api/savingPlaces")
@@ -38,13 +38,13 @@ public class SavingPlacesController {
         logger.info("Żądanie pobrania konfiguracji miejsc zapisu...");
         SavingPlacesDTO outputDto = new SavingPlacesDTO();
         DatabaseConfigDTO outputDatabaseConfig = new DatabaseConfigDTO();
-        SavingPlacesDTO savingPlacesDTO = configFileService.getSavingPlacesDTO();
+        SavingPlacesDTO savingPlacesDTO = savingPlacesService.getSavingPlacesDTO();
         DatabaseConfigDTO databaseConfigDTO = savingPlacesDTO.getDatabaseConfig();
         outputDto.setDatabaseConfig(outputDatabaseConfig);
         outputDto.setJpgComputerSave(savingPlacesDTO.getJpgComputerSave());
         outputDto.setJpgComputerLocation(savingPlacesDTO.getJpgComputerLocation());
         outputDto.setJpgDatabaseSave(savingPlacesDTO.getJpgDatabaseSave());
-        outputDto.setJpgRaspberryPendriveSave(savingPlacesDTO.getJpgRaspberryPendriveSave());
+        outputDto.setJpgRaspberryPendriveSave(savingPlacesDTO.getJpgPendriveSave());
         outputDto.setMatDatabaseSave(savingPlacesDTO.getMatDatabaseSave());
         outputDto.setMatPendriveSave(savingPlacesDTO.getMatPendriveSave());
         outputDatabaseConfig.setHost(databaseConfigDTO.getHost());
@@ -62,12 +62,12 @@ public class SavingPlacesController {
             String password = savingPlacesDTO.getDatabaseConfig().getPassword();
             if(password == null) {
                 savingPlacesDTO.getDatabaseConfig()
-                        .setPassword(configFileService.getSavingPlacesDTO()
+                        .setPassword(savingPlacesService.getSavingPlacesDTO()
                                 .getDatabaseConfig().getPassword());
             }
             if(savingPlacesDTO.getJpgDatabaseSave() || savingPlacesDTO.getMatDatabaseSave())
                 databaseService.setUpDatabaseSession(savingPlacesDTO.getDatabaseConfig());
-            configFileService.writeSavingPlaces(savingPlacesDTO);
+            savingPlacesService.setSavingPlacesDTO(savingPlacesDTO);
             logger.info("Uaktualnianie akończone...");
             return new ResponseEntity(HttpStatus.OK);
         } catch (Exception e) {
@@ -79,7 +79,7 @@ public class SavingPlacesController {
     @GetMapping("api/connectToDatabase")
     public ResponseEntity bringUpDatabaseConnection() {
         try {
-            databaseService.setUpDatabaseSession(configFileService.getSavingPlacesDTO().getDatabaseConfig());
+            databaseService.setUpDatabaseSession(savingPlacesService.getSavingPlacesDTO().getDatabaseConfig());
             return new ResponseEntity(HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();

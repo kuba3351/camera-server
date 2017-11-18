@@ -3,11 +3,12 @@ package com.raspberry.camera.service;
 import com.raspberry.camera.controller.PhotoController;
 import com.raspberry.camera.dto.TimeDTO;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -17,22 +18,30 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by jakub on 23.08.17.
  */
-public class TimerThread implements Runnable {
-    private final TimeDTO timer;
-    private final RabbitSender rabbitSender;
-    private final PhotoService photoService;
-    private final ConfigFileService configFileService;
-    private final PhotoController photoController;
-
-    private final static Logger logger = Logger.getLogger(TimerThread.class);
-
-
-    public TimerThread(TimeDTO timer, RabbitSender rabbitSender, PhotoService photoService, ConfigFileService configFileService, PhotoController photoController) {
-        this.timer = timer;
+@Service
+public class TimerService implements Runnable {
+    private final static Logger logger = Logger.getLogger(TimerService.class);
+    private TimeDTO timer;
+    private RabbitSender rabbitSender;
+    private PhotoService photoService;
+    private ConfigFileService configFileService;
+    private PhotoController photoController;
+    @Autowired
+    public TimerService(RabbitSender rabbitSender, PhotoService photoService, ConfigFileService configFileService, PhotoController photoController) {
+        this.timer = configFileService.getTimeDTO();
         this.rabbitSender = rabbitSender;
         this.photoService = photoService;
         this.configFileService = configFileService;
         this.photoController = photoController;
+    }
+
+    public TimeDTO getTimer() {
+        return timer;
+    }
+
+    public void setTimer(TimeDTO timer) throws IOException {
+        this.timer = timer;
+        configFileService.writeTimeToConfigFile(timer.toString());
     }
 
     public void run() {
@@ -125,11 +134,6 @@ public class TimerThread implements Runnable {
                     }
 
                     @Override
-                    public void setStatus(int i) {
-
-                    }
-
-                    @Override
                     public void setStatus(int i, String s) {
 
                     }
@@ -137,6 +141,11 @@ public class TimerThread implements Runnable {
                     @Override
                     public int getStatus() {
                         return 0;
+                    }
+
+                    @Override
+                    public void setStatus(int i) {
+
                     }
 
                     @Override
@@ -160,8 +169,18 @@ public class TimerThread implements Runnable {
                     }
 
                     @Override
+                    public void setCharacterEncoding(String s) {
+
+                    }
+
+                    @Override
                     public String getContentType() {
                         return null;
+                    }
+
+                    @Override
+                    public void setContentType(String s) {
+
                     }
 
                     @Override
@@ -175,11 +194,6 @@ public class TimerThread implements Runnable {
                     }
 
                     @Override
-                    public void setCharacterEncoding(String s) {
-
-                    }
-
-                    @Override
                     public void setContentLength(int i) {
 
                     }
@@ -190,18 +204,13 @@ public class TimerThread implements Runnable {
                     }
 
                     @Override
-                    public void setContentType(String s) {
-
+                    public int getBufferSize() {
+                        return 0;
                     }
 
                     @Override
                     public void setBufferSize(int i) {
 
-                    }
-
-                    @Override
-                    public int getBufferSize() {
-                        return 0;
                     }
 
                     @Override
@@ -225,13 +234,13 @@ public class TimerThread implements Runnable {
                     }
 
                     @Override
-                    public void setLocale(Locale locale) {
-
+                    public Locale getLocale() {
+                        return null;
                     }
 
                     @Override
-                    public Locale getLocale() {
-                        return null;
+                    public void setLocale(Locale locale) {
+
                     }
                 });
             } catch (IOException | InterruptedException | ExecutionException e) {

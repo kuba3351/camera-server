@@ -42,7 +42,7 @@ public class SavingPlacesDTO {
         this.jpgComputerLocation = jpgComputerLocation;
     }
 
-    public Boolean getJpgRaspberryPendriveSave() {
+    public Boolean getJpgPendriveSave() {
         return jpgRaspberryPendriveSave;
     }
 

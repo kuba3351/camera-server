@@ -2,6 +2,7 @@ package com.raspberry.camera.controller;
 
 import com.raspberry.camera.config.SecurityConfig;
 import com.raspberry.camera.dto.UsernameAndPasswordDTO;
+import com.raspberry.camera.service.AuthenticationService;
 import com.raspberry.camera.service.ConfigFileService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +23,13 @@ import static java.time.temporal.ChronoUnit.*;
 @RestController
 public class AuthenticationController {
 
-    private ConfigFileService configFileService;
+    private AuthenticationService authenticationService;
 
     private final static Logger logger = Logger.getLogger(AuthenticationController.class);
 
     @Autowired
-    public AuthenticationController(ConfigFileService configFileService) {
-        this.configFileService = configFileService;
+    public AuthenticationController(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     @PostMapping("/getAuthToken")
@@ -66,8 +67,9 @@ public class AuthenticationController {
     }
 
     private boolean areCredentialsCorrect(@RequestBody UsernameAndPasswordDTO usernameAndPasswordDTO) {
-        return usernameAndPasswordDTO.getUsername().equals(configFileService.getUsernameAndPasswordDTO().getUsername())
-                && usernameAndPasswordDTO.getPassword().equals(configFileService.getUsernameAndPasswordDTO().getPassword());
+        UsernameAndPasswordDTO usernameAndPasswordDTO1 = authenticationService.getUsernameAndPasswordDTO();
+        return usernameAndPasswordDTO.getUsername().equals(usernameAndPasswordDTO1.getUsername())
+                && usernameAndPasswordDTO.getPassword().equals(usernameAndPasswordDTO1.getPassword());
     }
 
     @PostMapping("/api/saveAuthInfo")
@@ -75,10 +77,10 @@ public class AuthenticationController {
         String password = usernameAndPasswordDTO.getPassword();
         if(password == null || password.isEmpty()) {
             usernameAndPasswordDTO
-                    .setPassword(configFileService.getUsernameAndPasswordDTO()
+                    .setPassword(authenticationService.getUsernameAndPasswordDTO()
                             .getPassword());
         }
-        configFileService.writeAuthInfo(usernameAndPasswordDTO);
+        authenticationService.setUsernameAndPasswordDTO(usernameAndPasswordDTO);
         logger.info("Zaktualizowano dane uwierzytelniające.");
         return new ResponseEntity(HttpStatus.OK);
     }
@@ -86,7 +88,7 @@ public class AuthenticationController {
     @GetMapping("/api/getAuthInfo")
     public UsernameAndPasswordDTO getAuthInfo() {
         logger.info("Żądanie pobrania ustawień autentykacji...");
-        UsernameAndPasswordDTO dtoFromConfig = configFileService.getUsernameAndPasswordDTO();
+        UsernameAndPasswordDTO dtoFromConfig = authenticationService.getUsernameAndPasswordDTO();
         UsernameAndPasswordDTO responseDto = new UsernameAndPasswordDTO();
         responseDto.setEnabled(dtoFromConfig.getEnabled());
         responseDto.setUsername(dtoFromConfig.getUsername());
