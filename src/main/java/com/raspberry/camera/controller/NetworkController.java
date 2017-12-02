@@ -1,9 +1,8 @@
 package com.raspberry.camera.controller;
 
 import com.raspberry.camera.dto.NetworkDTO;
-import com.raspberry.camera.service.ConfigFileService;
-import com.raspberry.camera.service.NetworkService;
 import com.raspberry.camera.dto.NetworkViewDTO;
+import com.raspberry.camera.service.NetworkService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,9 +19,8 @@ import java.util.List;
 @RestController
 public class NetworkController {
 
-    private NetworkService networkService;
-
     private final static Logger logger = Logger.getLogger(NetworkController.class);
+    private NetworkService networkService;
 
     @Autowired
     public NetworkController(NetworkService networkService) {

@@ -1,21 +1,22 @@
 package com.raspberry.camera.service;
 
-import com.raspberry.camera.entity.Photo;
+import java.io.FileNotFoundException;
+import java.rmi.RemoteException;
 
-import java.util.concurrent.Callable;
+public class TakePhotoCallable implements Runnable {
 
-public class TakePhotoCallable implements Callable<Photo> {
-
-    private int camera;
     private PhotoService photoService;
 
-    public TakePhotoCallable(int camera, PhotoService photoService) {
-        this.camera = camera;
+    public TakePhotoCallable(PhotoService photoService) {
         this.photoService = photoService;
     }
 
     @Override
-    public Photo call() throws Exception {
-        return photoService.takePhoto(camera);
+    public void run() {
+        try {
+            photoService.takePhotos();
+        } catch (FileNotFoundException | RemoteException e) {
+            e.printStackTrace();
+        }
     }
 }

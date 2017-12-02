@@ -7,6 +7,9 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Klasa przechowująca i udostępniająca nazwę użytkownika i hasło gdy API jest zabezpieczone
+ */
 class AuthorityInfo implements Authentication {
     private final UsernameAndPasswordDTO usernameAndPasswordDTO;
 

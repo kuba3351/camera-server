@@ -2,25 +2,43 @@ package com.raspberry.camera.service;
 
 import com.raspberry.camera.dto.PhotoResolutionDTO;
 import com.raspberry.camera.entity.Photo;
-import org.apache.log4j.Logger;
+import com.raspberry.camera.entity.RobotState;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.rmi.RemoteException;
 
 @Service
 public class PhotoService {
 
     private ConfigFileService configFileService;
     private PhotoResolutionDTO photoResolutionDTO;
+    private RobotService robotService;
+    private RobotState robotState;
+    private Photo photo1;
+    private Photo photo2;
+
+    public Photo getPhoto1() {
+        return photo1;
+    }
+
+    public Photo getPhoto2() {
+        return photo2;
+    }
+
+    @Autowired
+    public PhotoService(ConfigFileService configFileService, RobotService robotService) {
+        this.configFileService = configFileService;
+        this.photoResolutionDTO = configFileService.getPhotoResolutionDTO();
+        this.robotService = robotService;
+    }
 
     public PhotoResolutionDTO getPhotoResolutionDTO() {
         return photoResolutionDTO;
@@ -28,16 +46,25 @@ public class PhotoService {
 
     public void setPhotoResolutionDTO(PhotoResolutionDTO photoResolutionDTO) throws IOException {
         this.photoResolutionDTO = photoResolutionDTO;
-        configFileService.savePhotoResolution(photoResolutionDTO);
+        configFileService.writePhotoResolution(photoResolutionDTO);
     }
 
-    @Autowired
-    public PhotoService(ConfigFileService configFileService) {
-        this.configFileService = configFileService;
-        this.photoResolutionDTO = configFileService.getPhotoResolutionDTO();
+    public void takePhotos() throws FileNotFoundException, RemoteException {
+        if(robotService.isRobotConnected()) {
+            robotState = robotService.getRobotState();
+            robotService.stop();
+        }
+        photo1 = new File("/dev/video0").exists() ? takePhoto(0) : null;
+        photo2 = new File("/dev/video1").exists() ? takePhoto(1) : null;
+        if(robotState != null) {
+            if(robotState.equals(RobotState.FORWARD))
+                robotService.goForward();
+            else if(robotState.equals(RobotState.BACKWARD))
+                robotService.goBackward();
+        }
     }
 
-    public Photo takePhoto(int camera) throws FileNotFoundException {
+    private Photo takePhoto(int camera) throws FileNotFoundException {
         PhotoResolutionDTO photoResolutionDTO = configFileService.getPhotoResolutionDTO();
         VideoCapture capture = new VideoCapture(camera);
         capture.open(camera);
@@ -45,9 +72,7 @@ public class PhotoService {
         capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, photoResolutionDTO.getWidth());
         capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, photoResolutionDTO.getHeigth());
         capture.read(frame);
-        MatOfByte matOfByte = new MatOfByte();
-        Highgui.imencode(".jpg", frame, matOfByte);
         capture.release();
-        return new Photo(frame, matOfByte.toArray());
+        return new Photo(frame);
     }
 }

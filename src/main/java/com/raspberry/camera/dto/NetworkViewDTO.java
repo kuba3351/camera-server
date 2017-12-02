@@ -1,5 +1,8 @@
 package com.raspberry.camera.dto;
 
+/**
+ * Klasa służąca do transferu listy widzianych sieci wi-fi
+ */
 public class NetworkViewDTO {
     private String ssid;
     private String bars;

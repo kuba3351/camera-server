@@ -1,13 +1,12 @@
 package com.raspberry.camera.dto;
 
-import org.hibernate.validator.constraints.NotEmpty;
-
 import javax.validation.constraints.NotNull;
 
+/**
+ * Klasa służąca do transferu ustawień sieci wi-fi
+ */
 public class NetworkDTO {
 
-    @NotNull
-    @NotEmpty
     private String ssid;
     private String password;
 

@@ -1,9 +1,6 @@
 package com.raspberry.camera;
 
-import com.raspberry.camera.service.AutoDiscoveryListener;
-import com.raspberry.camera.service.ConfigFileService;
-import com.raspberry.camera.service.RabbitReceiver;
-import com.raspberry.camera.service.RobotService;
+import com.raspberry.camera.service.*;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Queue;
@@ -18,57 +15,60 @@ import org.springframework.context.annotation.Bean;
 
 import java.io.IOException;
 
+/**
+ * Klasa główna uruchamiająca cały system
+ */
 @SpringBootApplication
 @EnableAutoConfiguration
 public class CameraApplication {
 
-	private final static Logger logger = Logger.getLogger(CameraApplication.class);
+    private final static Logger logger = Logger.getLogger(CameraApplication.class);
 
-	@Bean
-	public RobotService robotService(ConfigFileService configFileService) {
-		return new RobotService(configFileService);
-	}
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Runtime.getRuntime().exec("v4l2-ctl --overlay=1").waitFor();
+        System.load("/usr/lib/jni/libopencv_java249.so");
+        SpringApplication.run(CameraApplication.class, args);
+        logger.info("Spring framework uruchomiony");
+        logger.info("Rozpoczynanie nasłuchiwania pakietów...");
+        Thread thread = new Thread(new AutoDiscoveryListener());
+        thread.start();
+    }
 
-	@Bean
-	public Queue queue() {
-		return new Queue("test");
-	}
+    @Bean
+    public RobotService robotService(ConfigFileService configFileService) {
+        return new RobotService(configFileService);
+    }
 
-	@Bean
-	public ConnectionFactory connectionFactory() {
-		CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
-		connectionFactory.setUsername("pi");
-		connectionFactory.setPassword("raspberry");
-		return connectionFactory;
-	}
+    @Bean
+    public Queue queue() {
+        return new Queue("test");
+    }
 
-	@Bean
-	public RabbitReceiver rabbitReceiver(RobotService robotService) {
-		return new RabbitReceiver(robotService);
-	}
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
+        connectionFactory.setUsername("pi");
+        connectionFactory.setPassword("raspberry");
+        return connectionFactory;
+    }
 
-	@Bean
-	public MessageListenerAdapter messageListenerAdapter(RabbitReceiver receiver) {
-		return new MessageListenerAdapter(receiver, "receive");
-	}
+    @Bean
+    public RabbitReceiver rabbitReceiver(RobotService robotService) {
+        return new RabbitReceiver(robotService);
+    }
 
-	@Bean
-	public SimpleMessageListenerContainer container(ConnectionFactory connectionFactory, MessageListenerAdapter messageListenerAdapter) {
-		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-		container.setConnectionFactory(connectionFactory);
-		container.setQueueNames("test2");
-		container.setMessageListener(messageListenerAdapter);
-		container.setAcknowledgeMode(AcknowledgeMode.AUTO);
-		return container;
-	}
+    @Bean
+    public MessageListenerAdapter messageListenerAdapter(RabbitReceiver receiver) {
+        return new MessageListenerAdapter(receiver, "receive");
+    }
 
-	public static void main(String[] args) throws IOException, InterruptedException {
-		Runtime.getRuntime().exec("v4l2-ctl --overlay=1").waitFor();
-		System.load("/usr/lib/jni/libopencv_java249.so");
-		SpringApplication.run(CameraApplication.class, args);
-		logger.info("Spring framework uruchomiony");
-		logger.info("Rozpoczynanie nasłuchiwania pakietów...");
-		Thread thread = new Thread(new AutoDiscoveryListener());
-		thread.start();
-	}
+    @Bean
+    public SimpleMessageListenerContainer container(ConnectionFactory connectionFactory, MessageListenerAdapter messageListenerAdapter) {
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.setQueueNames("test2");
+        container.setMessageListener(messageListenerAdapter);
+        container.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        return container;
+    }
 }

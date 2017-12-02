@@ -14,11 +14,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Serwis służący do zarządzania połączeniem wi-fi
+ */
 @Service
 public class NetworkService {
 
+    private final static Logger logger = Logger.getLogger(NetworkService.class);
     private NetworkDTO networkDTO;
     private ConfigFileService configFileService;
+    private Boolean isHotspotActive;
+
+    @Autowired
+    public NetworkService(ConfigFileService configFileService) throws IOException, InterruptedException {
+        this.configFileService = configFileService;
+        this.networkDTO = configFileService.getNetworkDTO();
+        Thread thread = new Thread(() -> {
+            try {
+                if (networkDTO.getHotspot())
+                    enableHotspot();
+                else {
+                    if (!isConnectedTo(networkDTO.getSsid())) {
+                        logger.info("Połączenie nieaktywne. Próbuję łączyć według ustawień...");
+                        if (!connectToNetwork(networkDTO)) {
+                            logger.info("Nie udało się połączyć. Stawiam hotspota...");
+                            enableHotspot();
+                        }
+                    } else {
+                        logger.info("Połączenie już nawiązane. Kontynuuję uruchamianie...");
+                        isHotspotActive = false;
+                    }
+                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+    }
 
     public NetworkDTO getNetworkDTO() {
         return networkDTO;
@@ -29,48 +61,22 @@ public class NetworkService {
         configFileService.writeNetworkDTO(networkDTO);
     }
 
-    private final static Logger logger = Logger.getLogger(NetworkService.class);
-
-    private Boolean isHotspotActive;
-
     public Boolean getHotspotActive() {
         return isHotspotActive;
     }
 
-    @Autowired
-    public NetworkService(ConfigFileService configFileService) throws IOException, InterruptedException {
-        this.configFileService = configFileService;
-        this.networkDTO = configFileService.getNetworkDTO();
-        if(networkDTO.getHotspot())
-            enableHotspot();
-        else {
-            if (!isConnectedTo(networkDTO.getSsid())) {
-                logger.info("Połączenie nieaktywne. Próbuję łączyć według ustawień...");
-                if (!connectToNetwork(networkDTO)) {
-                    logger.info("Nie udało się połączyć. Stawiam hotspota...");
-                    enableHotspot();
-                }
-            } else {
-                logger.info("Połączenie już nawiązane. Kontynuuję uruchamianie...");
-                isHotspotActive = false;
-            }
-        }
-    }
-
     public Boolean enableHotspot() throws IOException, InterruptedException {
         Process hotspot = Runtime.getRuntime().exec("sudo nmcli c up hotspot");
-        if(hotspot.waitFor() != 0) {
+        if (hotspot.waitFor() != 0) {
             logger.error("Stawianie hotspota nieudane.");
             isHotspotActive = false;
-        }
-        else {
+        } else {
             logger.info("Hotspot postawiony!");
-            Process dhcpcd = Runtime.getRuntime().exec("sudo systemctl start isc-dhcp-server");
-            if(dhcpcd.waitFor() == 0) {
+            Process dhcpcd = Runtime.getRuntime().exec("sudo systemctl start dnsmasq");
+            if (dhcpcd.waitFor() == 0) {
                 logger.info("DHCP postawiony!");
                 isHotspotActive = true;
-            }
-            else {
+            } else {
                 logger.error("Nie udało się postawić DHCP");
                 isHotspotActive = false;
             }
@@ -82,15 +88,15 @@ public class NetworkService {
         Process dhcpcd = Runtime.getRuntime().exec("sudo systemctl stop isc-dhcp-server");
         dhcpcd.waitFor();
         String password = networkDTO.getPassword();
-        String command = "sudo nmcli dev wifi connect "+networkDTO.getSsid();
-        if(password != null && !password.isEmpty())
-            command += " password "+password;
+        String command = "sudo nmcli dev wifi connect " + networkDTO.getSsid();
+        if (password != null && !password.isEmpty())
+            command += " password " + password;
         Process connecting = Runtime.getRuntime().exec(command);
         connecting.waitFor();
         new BufferedReader(new InputStreamReader(connecting.getInputStream())).lines().forEach(System.out::println);
         new BufferedReader(new InputStreamReader(connecting.getErrorStream())).lines().forEach(System.out::println);
         Thread.sleep(5000);
-        if(isConnectedTo(networkDTO.getSsid())) {
+        if (isConnectedTo(networkDTO.getSsid())) {
             this.networkDTO = networkDTO;
             isHotspotActive = false;
             return true;
@@ -116,11 +122,11 @@ public class NetworkService {
         ArrayList<NetworkViewDTO> networkViewDTOS = new ArrayList<>();
         int linesCount = 0;
         NetworkViewDTO networkViewDTO = new NetworkViewDTO();
-        while(scanner.hasNextLine()) {
+        while (scanner.hasNextLine()) {
             linesCount++;
             String id = scanner.next();
             String value = scanner.nextLine().trim();
-            switch(id) {
+            switch (id) {
                 case "SSID:":
                     networkViewDTO.setSsid(value);
                     break;
@@ -130,9 +136,10 @@ public class NetworkService {
                 case "ZABEZPIECZENIA:":
                     networkViewDTO.setSecurity(value);
                     break;
-                default: throw new RuntimeException("Problem ze sparsowaniem wyjścia.");
+                default:
+                    throw new RuntimeException("Problem ze sparsowaniem wyjścia.");
             }
-            if(linesCount % 3 == 0) {
+            if (linesCount % 3 == 0) {
                 networkViewDTOS.add(networkViewDTO);
                 networkViewDTO = new NetworkViewDTO();
             }

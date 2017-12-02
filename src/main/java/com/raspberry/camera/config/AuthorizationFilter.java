@@ -15,15 +15,17 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.time.temporal.ChronoUnit.*;
+import static java.time.temporal.ChronoUnit.NANOS;
+import static java.time.temporal.ChronoUnit.SECONDS;
 
+/**
+ * Klasa walidująca token autoryzacyjny i blokująca nieautoryzowane żądania do API kiedy API jest zabezpieczone
+ */
 class AuthorizationFilter implements Filter {
+    private final static Logger logger = Logger.getLogger(AuthorizationFilter.class);
     private final UsernameAndPasswordDTO usernameAndPasswordDTO;
-
     private Map<String, Integer> numberOfTries;
     private Map<String, LocalDateTime> resetDate;
-
-    private final static Logger logger = Logger.getLogger(AuthorizationFilter.class);
 
     public AuthorizationFilter(UsernameAndPasswordDTO usernameAndPasswordDTO) {
         this.usernameAndPasswordDTO = usernameAndPasswordDTO;
@@ -53,7 +55,7 @@ class AuthorizationFilter implements Filter {
                     return;
                 }
             }
-            if(!((HttpServletRequest)servletRequest).getServletPath().startsWith("/api")) {
+            if (!((HttpServletRequest) servletRequest).getServletPath().startsWith("/api")) {
                 filterChain.doFilter(servletRequest, servletResponse);
                 return;
             }
@@ -78,25 +80,23 @@ class AuthorizationFilter implements Filter {
                         response.setStatus(403);
                         response.getOutputStream().write("Token nieważny.".getBytes());
                     }
-                }
-                else throw new Exception();
+                } else throw new Exception();
             } else {
                 HttpServletResponse response = (HttpServletResponse) servletResponse;
                 response.setStatus(403);
                 logger.error("Request zablokowany. Nie znaleziono tokena.");
                 response.getOutputStream().write("Brak tokena autoryzacyjnego".getBytes());
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             LocalDateTime date = resetDate.get(ipAddress);
-            if(date != null && date.isBefore(LocalDateTime.now())) {
+            if (date != null && date.isBefore(LocalDateTime.now())) {
                 numberOfTries.put(ipAddress, 0);
-            }
-            else {
+            } else {
                 numberOfTries.put(ipAddress, tries != null ? tries + 1 : 1);
                 resetDate.put(ipAddress, LocalDateTime.now().plusMinutes(15));
             }
-            HttpServletResponse response = (HttpServletResponse)servletResponse;
+            HttpServletResponse response = (HttpServletResponse) servletResponse;
             response.setStatus(403);
             logger.error("Request zablokowany. Nieprawidłowy token.");
             response.getOutputStream().write("Nieprawidłowy token autoryzacyjny".getBytes());
@@ -112,7 +112,7 @@ class AuthorizationFilter implements Filter {
                 && username.equals(usernameAndPasswordDTO.getUsername())
                 && passwordCharsString.charAt(0) == password.charAt(Long.valueOf(duration.get(SECONDS) % length).intValue())
                 && passwordCharsString.charAt(1) == password.charAt(Long.valueOf(duration.get(NANOS) % length).intValue())
-                && passwordCharsString.charAt(2) == password.charAt(Long.valueOf((duration.get(SECONDS)/10) % length).intValue())
+                && passwordCharsString.charAt(2) == password.charAt(Long.valueOf((duration.get(SECONDS) / 10) % length).intValue())
                 && passwordCharsString.charAt(3) == password.charAt((Math.abs(duration.hashCode() % length)));
     }
 

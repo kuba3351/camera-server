@@ -2,17 +2,12 @@ package com.raspberry.camera.entity;
 
 import org.opencv.core.Mat;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 public class Photo {
     private Mat matImage;
     private byte[] jpgImage;
 
-    public Photo(Mat matImage, byte[] jpgImage) {
+    public Photo(Mat matImage) {
         this.matImage = matImage;
-        this.jpgImage = jpgImage;
     }
 
     public Mat getMatImage() {
@@ -22,5 +17,9 @@ public class Photo {
 
     public byte[] getJpgImage() {
         return jpgImage;
+    }
+
+    public void setJpgImage(byte[] jpgImage) {
+        this.jpgImage = jpgImage;
     }
 }

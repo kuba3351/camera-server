@@ -1,27 +1,56 @@
 package com.raspberry.camera.dto;
 
-import com.raspberry.camera.entity.TimeThreadState;
+import com.raspberry.camera.entity.ThreadState;
+
+import javax.validation.constraints.NotNull;
 
 /**
- * Created by jakub on 03.08.17.
+ * Klasa służąca do transferu ustawień czasomierza
  */
 public class TimeDTO {
+
+    @NotNull
     private int hours;
+
+    @NotNull
     private int minutes;
+
+    @NotNull
     private int seconds;
 
     private int reamingHours;
     private int reamingMinutes;
     private int reamingSeconds;
 
-    private TimeThreadState timeThreadState;
+    private ThreadState threadState;
 
-    public TimeThreadState getTimeThreadState() {
-        return timeThreadState;
+    public TimeDTO() {
     }
 
-    public void setTimeThreadState(TimeThreadState timeThreadState) {
-        this.timeThreadState = timeThreadState;
+    public TimeDTO(int hours, int minutes, int seconds) {
+        this.hours = hours;
+        this.minutes = minutes;
+        this.seconds = seconds;
+        this.reamingHours = hours;
+        this.reamingMinutes = minutes;
+        this.reamingSeconds = seconds;
+    }
+
+    public static TimeDTO parseFromString(String string) {
+        TimeDTO timeDTO = new TimeDTO();
+        timeDTO.setHours(Integer.parseInt(string.substring(0, 2)));
+        timeDTO.setMinutes(Integer.parseInt(string.substring(3, 5)));
+        timeDTO.setSeconds(Integer.parseInt(string.substring(6, 8)));
+        timeDTO.reset();
+        return timeDTO;
+    }
+
+    public ThreadState getThreadState() {
+        return threadState;
+    }
+
+    public void setThreadState(ThreadState threadState) {
+        this.threadState = threadState;
     }
 
     public int getHours() {
@@ -72,27 +101,6 @@ public class TimeDTO {
         this.reamingSeconds = reamingSeconds;
     }
 
-    public TimeDTO() {
-    }
-
-    public static TimeDTO parseFromString(String string) {
-        TimeDTO timeDTO = new TimeDTO();
-        timeDTO.setHours(Integer.parseInt(string.substring(0, 2)));
-        timeDTO.setMinutes(Integer.parseInt(string.substring(3, 5)));
-        timeDTO.setSeconds(Integer.parseInt(string.substring(6, 8)));
-        timeDTO.reset();
-        return timeDTO;
-    }
-
-    public TimeDTO(int hours, int minutes, int seconds) {
-        this.hours = hours;
-        this.minutes = minutes;
-        this.seconds = seconds;
-        this.reamingHours = hours;
-        this.reamingMinutes = minutes;
-        this.reamingSeconds = seconds;
-    }
-
     public void reset() {
         reamingHours = hours;
         reamingMinutes = minutes;
@@ -100,18 +108,16 @@ public class TimeDTO {
     }
 
     public boolean tick() {
-        if(reamingSeconds == 0) {
-            if(reamingMinutes == 0) {
-                if(reamingHours == 0)
+        if (reamingSeconds == 0) {
+            if (reamingMinutes == 0) {
+                if (reamingHours == 0)
                     return false;
                 reamingHours -= 1;
                 reamingMinutes = 59;
-            }
-            else
+            } else
                 reamingMinutes -= 1;
             reamingSeconds = 59;
-        }
-        else
+        } else
             reamingSeconds -= 1;
         return true;
     }

@@ -12,13 +12,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.time.LocalDateTime;
 
+/**
+ * Konfoguracja modułu Spring Security odpowiedzialnego za zabezpieczenie API
+ */
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    final
-    ConfigFileService configFileService;
-
     public static LocalDateTime appStartDate = LocalDateTime.now();
+    final ConfigFileService configFileService;
 
     @Autowired
     public SecurityConfig(ConfigFileService configFileService) {
@@ -26,32 +27,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception
-    {
+    public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         UsernameAndPasswordDTO usernameAndPasswordDTO = configFileService.getUsernameAndPasswordDTO();
-        if(usernameAndPasswordDTO.getEnabled()) {
+        if (usernameAndPasswordDTO.getEnabled()) {
             authenticationManagerBuilder.inMemoryAuthentication()
                     .withUser(usernameAndPasswordDTO.getUsername())
                     .password(usernameAndPasswordDTO.getPassword()).roles("ADMIN");
-        }
-        else {
+        } else {
             authenticationManagerBuilder.inMemoryAuthentication()
                     .withUser("default")
                     .password("default").roles("ADMIN");
         }
     }
+
     @Override
-    public void configure(HttpSecurity httpSecurity) throws Exception
-    {
+    public void configure(HttpSecurity httpSecurity) throws Exception {
         UsernameAndPasswordDTO usernameAndPasswordDTO = configFileService.getUsernameAndPasswordDTO();
-        if(usernameAndPasswordDTO.getEnabled()) {
+        if (usernameAndPasswordDTO.getEnabled()) {
             httpSecurity.authorizeRequests().antMatchers("/api/**").authenticated()
                     .and().sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     .and().addFilterBefore(new AuthorizationFilter(usernameAndPasswordDTO), UsernamePasswordAuthenticationFilter.class)
                     .csrf().disable();
-        }
-        else {
+        } else {
             httpSecurity.authorizeRequests().antMatchers("/api/**").authenticated()
                     .and().sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

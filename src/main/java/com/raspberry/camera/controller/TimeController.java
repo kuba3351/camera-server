@@ -1,10 +1,8 @@
 package com.raspberry.camera.controller;
 
-import com.raspberry.camera.entity.TimeThreadState;
-import com.raspberry.camera.service.TimerService;
 import com.raspberry.camera.dto.TimeDTO;
-import com.raspberry.camera.service.PhotoService;
-import com.raspberry.camera.service.RabbitSender;
+import com.raspberry.camera.entity.ThreadState;
+import com.raspberry.camera.service.TimerService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,31 +12,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.io.IOException;
 
 /**
- * Created by jakub on 03.08.17.
+ * Kontroler odpowiedzialny za ustawienia czasomierza
  */
 
 @RestController
 public class TimeController {
-
-    private PhotoService photoService;
 
     private final static Logger logger = Logger.getLogger(TimeController.class);
 
     private Thread timeThread;
     private TimerService timerService;
 
-    private RabbitSender rabbitSender;
     private TimeDTO timer;
-    private PhotoController photoController;
 
     @Autowired
-    public TimeController(PhotoService photoService, RabbitSender rabbitSender, PhotoController photoController, TimerService timerService) throws IOException {
-        this.photoService = photoService;
-        this.rabbitSender = rabbitSender;
-        this.photoController = photoController;
+    public TimeController(TimerService timerService) throws IOException {
         timeThread = new Thread(timerService);
         this.timerService = timerService;
     }
@@ -49,14 +41,14 @@ public class TimeController {
     }
 
     @PostMapping("/api/time")
-    public void setTime(@RequestBody TimeDTO timeDTO) {
+    public void setTime(@RequestBody @Valid TimeDTO timeDTO) {
         logger.info("Odebrano żądanie ustawienia czasomierza. ");
         Thread thread = new Thread(() -> {
             try {
                 timeDTO.reset();
                 timerService.setTimer(timeDTO);
-                logger.info("Przetworzono żądanie ustawienia czasomierza. Czasomierz ustawiony na: "+timeDTO.toString());
-                timer.setTimeThreadState(TimeThreadState.NEW);
+                logger.info("Przetworzono żądanie ustawienia czasomierza. Czasomierz ustawiony na: " + timeDTO.toString());
+                timer.setThreadState(ThreadState.NEW);
                 this.timer = timeDTO;
                 timeThread = new Thread(timerService);
             } catch (IOException e) {
@@ -74,17 +66,17 @@ public class TimeController {
         else
             timeThread.resume();
         logger.info("Przetworzono żądanie uruchomienia czasomierza.");
-        timerService.getTimer().setTimeThreadState(TimeThreadState.RUNNING);
+        timerService.getTimer().setThreadState(ThreadState.RUNNING);
         return new ResponseEntity(HttpStatus.OK);
     }
 
     @GetMapping("/api/time/stop")
     public ResponseEntity stop() throws Exception {
         logger.info("Odebrano żądanie wtrzymania czasomierza.");
-        if(timerService.getTimer().getTimeThreadState().equals(TimeThreadState.RUNNING))
+        if (timerService.getTimer().getThreadState().equals(ThreadState.RUNNING))
             timeThread.suspend();
         logger.info("Przetworzono żądanie wstrzymania czasomierza.");
-        timerService.getTimer().setTimeThreadState(TimeThreadState.SUSPENDED);
+        timerService.getTimer().setThreadState(ThreadState.SUSPENDED);
         return new ResponseEntity(HttpStatus.OK);
     }
 

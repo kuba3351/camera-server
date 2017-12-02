@@ -12,13 +12,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * Kontroler odpowiedzialny za żądania nie pasujące do innych kontrolerów
+ */
 @RestController
 public class UtilsController {
 
-    @Autowired
-    private PendriveService pendriveService;
-
     private final static Logger logger = Logger.getLogger(UtilsController.class);
+    private final PendriveService pendriveService;
+
+    @Autowired
+    public UtilsController(PendriveService pendriveService) {
+        this.pendriveService = pendriveService;
+    }
 
     @GetMapping("/api/whatIsMyIp")
     public void getIp(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -44,7 +50,7 @@ public class UtilsController {
         if (!pendriveService.checkIfPendriveConnected()) {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
-        if(pendriveService.checkWherePendriveMounted().isPresent()) {
+        if (pendriveService.checkWherePendriveMounted().isPresent()) {
             return new ResponseEntity(HttpStatus.OK);
         }
         return pendriveService.mountPendrive() ?

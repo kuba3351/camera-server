@@ -6,10 +6,20 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
+/**
+ * Serwis służący do zarządzania zabezieczeniem API
+ */
 @Service
 public class AuthenticationService {
 
     private UsernameAndPasswordDTO usernameAndPasswordDTO;
+    private ConfigFileService configFileService;
+
+    @Autowired
+    public AuthenticationService(ConfigFileService configFileService) {
+        this.configFileService = configFileService;
+        this.usernameAndPasswordDTO = configFileService.getUsernameAndPasswordDTO();
+    }
 
     public UsernameAndPasswordDTO getUsernameAndPasswordDTO() {
         return usernameAndPasswordDTO;
@@ -18,14 +28,6 @@ public class AuthenticationService {
     public void setUsernameAndPasswordDTO(UsernameAndPasswordDTO usernameAndPasswordDTO) throws IOException {
         this.usernameAndPasswordDTO = usernameAndPasswordDTO;
         configFileService.writeAuthInfo(usernameAndPasswordDTO);
-    }
-
-    private ConfigFileService configFileService;
-
-    @Autowired
-    public AuthenticationService(ConfigFileService configFileService) {
-        this.configFileService = configFileService;
-        this.usernameAndPasswordDTO = configFileService.getUsernameAndPasswordDTO();
     }
 
 }

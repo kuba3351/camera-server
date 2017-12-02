@@ -1,7 +1,6 @@
 package com.raspberry.camera.controller;
 
 import com.raspberry.camera.dto.PhotoResolutionDTO;
-import com.raspberry.camera.service.ConfigFileService;
 import com.raspberry.camera.service.PhotoResolutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,8 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.io.IOException;
 
+/**
+ * Kontroler odpowiedzialny za ustawienia rozdzielczości zdjęć
+ */
 @RestController
 public class PhotoResolutionController {
 
@@ -29,7 +32,7 @@ public class PhotoResolutionController {
     }
 
     @PostMapping("/api/photo/resolution")
-    public ResponseEntity setPhotoResolution(@RequestBody PhotoResolutionDTO photoResolutionDTO) {
+    public ResponseEntity setPhotoResolution(@RequestBody @Valid PhotoResolutionDTO photoResolutionDTO) {
         try {
             photoResolutionService.setPhotoResolutionDTO(photoResolutionDTO);
             return new ResponseEntity(HttpStatus.OK);

@@ -7,6 +7,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import javax.servlet.*;
 import java.io.IOException;
 
+/**
+ * Klasa przepuszczająca wszystkie żądania do API kiedy NIE jest ono zabezpieczone
+ */
 public class PermitAllFilter implements Filter {
 
     @Override

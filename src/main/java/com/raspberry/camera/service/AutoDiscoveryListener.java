@@ -3,10 +3,12 @@ package com.raspberry.camera.service;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 /**
- * Created by jakub on 29.07.17.
+ * Serwis służący do nasłuchiwania połączeń od klienta podczas wyszukiwania serwera w sieci
  */
 public class AutoDiscoveryListener implements Runnable {
 

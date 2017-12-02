@@ -1,12 +1,11 @@
 package com.raspberry.camera.service;
 
 import com.raspberry.camera.MatUtils;
-import com.raspberry.camera.entity.MatEntity;
+import com.raspberry.camera.entity.MatImage;
 import com.raspberry.camera.entity.Photo;
 import org.apache.log4j.Logger;
 import org.opencv.core.Mat;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -22,26 +21,26 @@ public class PendriveService {
 
     @Autowired
     public PendriveService(ConfigFileService configFileService) {
-        if(configFileService.getSavingPlacesDTO().getJpgPendriveSave() || configFileService.getSavingPlacesDTO().getMatPendriveSave()) {
-            logger.info("Sprawdzam pendrive...");
-            if(checkIfPendriveConnected()) {
-                logger.info("Pendrive podłączony. Sprawdzam montowanie...");
-                try {
-                    if(checkWherePendriveMounted().isPresent()) {
-                        logger.info("Pendrive już zamontowany. Kontynuuję uruchomienie...");
-                    }
-                    else {
-                        logger.info("Montuję pendrive...");
-                        if(mountPendrive()) {
-                            logger.info("Pendrive zamontowany. Kontynuuję uruchomienie...");
+        if (configFileService.getSavingPlacesDTO().getJpgPendriveSave() || configFileService.getSavingPlacesDTO().getMatPendriveSave()) {
+            Thread thread = new Thread(() -> {
+                logger.info("Sprawdzam pendrive...");
+                if (checkIfPendriveConnected()) {
+                    logger.info("Pendrive podłączony. Sprawdzam montowanie...");
+                    try {
+                        if (checkWherePendriveMounted().isPresent()) {
+                            logger.info("Pendrive już zamontowany. Kontynuuję uruchomienie...");
+                        } else {
+                            logger.info("Montuję pendrive...");
+                            if (mountPendrive()) {
+                                logger.info("Pendrive zamontowany. Kontynuuję uruchomienie...");
+                            } else logger.error("Problem z montowaniem pendrive...");
                         }
-                        else logger.error("Problem z montowaniem pendrive...");
+                    } catch (IOException | InterruptedException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            else logger.warn("Pendrive nie jest podłączony!");
+                } else logger.warn("Pendrive nie jest podłączony!");
+            });
+            thread.start();
         }
     }
 
@@ -71,14 +70,16 @@ public class PendriveService {
         if (!jpgPath.isDirectory())
             jpgPath.mkdir();
         if (photo1 != null) {
-            File photo = new File(jpgPath.toString() + "/" + LocalDateTime.now() + "-camera1.jpg");
+            String jpgFilePath = jpgPath.toString() + "/" + LocalDateTime.now() + "-camera1.jpg";
+            File photo = new File(jpgFilePath.replace(":", "-"));
             photo.createNewFile();
             FileWriter writer = new FileWriter(photo);
             writer.write(new String(photo1.getJpgImage()));
             writer.close();
         }
         if (photo2 != null) {
-            FileWriter writer = new FileWriter(new File(jpgPath.toString()+"/"+LocalDateTime.now()+"-camera2.jpg"));
+            String jpgFilePath = jpgPath.toString() + "/" + LocalDateTime.now() + "-camera2.jpg";
+            FileWriter writer = new FileWriter(new File(jpgFilePath.replace(":", "-")));
             writer.write(new String(photo2.getJpgImage()));
             writer.close();
         }
@@ -90,26 +91,28 @@ public class PendriveService {
         if (!matPath.isDirectory())
             matPath.mkdir();
         if (photo1 != null) {
-            File matFile = new File(matPath.toString() + "/" + LocalDateTime.now() + "-camera1.yml");
+            String matFilePath = matPath.toString() + "/" + LocalDateTime.now() + "-camera1.yml";
+            File matFile = new File(matFilePath.replace(":", "-"));
             matFile.createNewFile();
             FileWriter fileWriter = new FileWriter(matFile);
-            MatEntity matEntity = new MatEntity();
+            MatImage matImage = new MatImage();
             Mat mat = photo1.getMatImage();
-            matEntity.setCols(mat.cols());
-            matEntity.setRows(mat.rows());
-            matEntity.setData(MatUtils.extractDataFromMat(mat));
-            ByteArrayOutputStream outputStream = MatUtils.writeMat(matEntity);
+            matImage.setCols(mat.cols());
+            matImage.setRows(mat.rows());
+            matImage.setData(MatUtils.extractDataFromMat(mat));
+            ByteArrayOutputStream outputStream = MatUtils.writeMat(matImage);
             fileWriter.write(new String(outputStream.toByteArray()));
             fileWriter.close();
         }
         if (photo2 != null) {
-            FileWriter fileWriter = new FileWriter(new File(matPath.toString() + "/" + LocalDateTime.now() + "-camera2.yml"));
-            MatEntity matEntity = new MatEntity();
+            String matFilePath = matPath.toString() + "/" + LocalDateTime.now() + "-camera2.yml";
+            FileWriter fileWriter = new FileWriter(new File(matFilePath.replace(":", "-")));
+            MatImage matImage = new MatImage();
             Mat mat = photo2.getMatImage();
-            matEntity.setCols(mat.cols());
-            matEntity.setRows(mat.rows());
-            matEntity.setData(MatUtils.extractDataFromMat(mat));
-            ByteArrayOutputStream outputStream = MatUtils.writeMat(matEntity);
+            matImage.setCols(mat.cols());
+            matImage.setRows(mat.rows());
+            matImage.setData(MatUtils.extractDataFromMat(mat));
+            ByteArrayOutputStream outputStream = MatUtils.writeMat(matImage);
             fileWriter.write(new String(outputStream.toByteArray()));
             fileWriter.close();
         }

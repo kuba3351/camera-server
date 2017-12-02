@@ -1,8 +1,8 @@
 package com.raspberry.camera.service;
 
-import com.raspberry.camera.entity.DatabaseType;
-import com.raspberry.camera.entity.TimeThreadState;
 import com.raspberry.camera.dto.*;
+import com.raspberry.camera.entity.DatabaseType;
+import com.raspberry.camera.entity.ThreadState;
 import org.apache.log4j.Logger;
 import org.ini4j.Profile;
 import org.ini4j.Wini;
@@ -13,33 +13,19 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by jakub on 21.08.17.
+ * Serwis służący do zarządzania plikiem INI przechowującym konfigurację całego systemu
  */
 @Service
 public class ConfigFileService {
 
+    private final static Logger logger = Logger.getLogger(ConfigFileService.class);
     private SavingPlacesDTO savingPlacesDTO;
     private TimeDTO timeDTO;
     private UsernameAndPasswordDTO usernameAndPasswordDTO;
     private NetworkDTO networkDTO;
-
-    public PhotoResolutionDTO getPhotoResolutionDTO() {
-        return photoResolutionDTO;
-    }
-
     private PhotoResolutionDTO photoResolutionDTO;
-
-    public NetworkDTO getNetworkDTO() {
-        return networkDTO;
-    }
-
-    public UsernameAndPasswordDTO getUsernameAndPasswordDTO() {
-        return usernameAndPasswordDTO;
-    }
-
+    private AutoPhotosDTO autoPhotosDTO;
     private Wini file;
-
-    private final static Logger logger = Logger.getLogger(ConfigFileService.class);
 
     @Autowired
     public ConfigFileService() throws Exception {
@@ -58,29 +44,61 @@ public class ConfigFileService {
         networkDTO = readNetworkDTO();
         logger.info("Wczytywanie konfiguracji rozdzielczości...");
         photoResolutionDTO = readPhotoResolution();
+        logger.info("Wczytywanie konfiguracji automatycznych zdjęć...");
+        autoPhotosDTO = readAutoPhotosDTO();
         logger.info("Zakończono wczytywanie konfiguracji.");
+    }
+
+    public PhotoResolutionDTO getPhotoResolutionDTO() {
+        return photoResolutionDTO;
+    }
+
+    public NetworkDTO getNetworkDTO() {
+        return networkDTO;
+    }
+
+    public UsernameAndPasswordDTO getUsernameAndPasswordDTO() {
+        return usernameAndPasswordDTO;
     }
 
     public String readRobotIp() {
         return file.get("Robot", "robot.ipAddress");
     }
 
-    public void saveRobotIp(String ip) throws IOException {
+    public void writeRobotIP(String ip) throws IOException {
         file.put("Robot", "robot.ipAddress", ip);
+        file.store();
+    }
+
+    public AutoPhotosDTO readAutoPhotosDTO() {
+        Profile.Section autoPhotos = file.get("AutoPhotos");
+        AutoPhotosDTO autoPhotosDTO = new AutoPhotosDTO();
+        if(autoPhotos.containsKey("autophotos.enabled")) {
+            autoPhotosDTO.setAutoPhotosEnabled(Boolean.parseBoolean(autoPhotos.get("autophotos.enabled")));
+        }
+        if(autoPhotos.containsKey("autophotos.distance")) {
+            autoPhotosDTO.setAutoPhotosDistance(Integer.parseInt(autoPhotos.get("autophotos.distance")));
+        }
+        return autoPhotosDTO;
+    }
+
+    public void writeAutophotosDTO(AutoPhotosDTO autoPhotosDTO) throws IOException {
+        file.put("AutoPhotos", "autophotos.enabled", autoPhotosDTO.getAutoPhotosEnabled().toString());
+        file.put("AutoPhotos", "autophotos.distance", autoPhotosDTO.getAutoPhotosDistance().toString());
         file.store();
     }
 
     public PhotoResolutionDTO readPhotoResolution() {
         PhotoResolutionDTO photoResolutionDTO = new PhotoResolutionDTO();
         Profile.Section photo = file.get("Photo");
-        if(photo.containsKey("photo.width"))
+        if (photo.containsKey("photo.width"))
             photoResolutionDTO.setWidth(Integer.parseInt(photo.get("photo.width")));
-        if(photo.containsKey("photo.height"))
+        if (photo.containsKey("photo.height"))
             photoResolutionDTO.setHeigth(Integer.parseInt(photo.get("photo.height")));
         return photoResolutionDTO;
     }
 
-    public void savePhotoResolution(PhotoResolutionDTO photoResolutionDTO) throws IOException {
+    public void writePhotoResolution(PhotoResolutionDTO photoResolutionDTO) throws IOException {
         file.put("Photo", "photo.width", photoResolutionDTO.getWidth());
         file.put("Photo", "photo.height", photoResolutionDTO.getHeigth());
         file.store();
@@ -89,13 +107,13 @@ public class ConfigFileService {
 
     private NetworkDTO readNetworkDTO() {
         NetworkDTO networkDTO = new NetworkDTO();
-        if(file.containsKey("Network")) {
+        if (file.containsKey("Network")) {
             Profile.Section network = file.get("Network");
-            if(network.containsKey("network.ssid"))
+            if (network.containsKey("network.ssid"))
                 networkDTO.setSsid(network.get("network.ssid"));
-            if(network.containsKey("network.password"))
+            if (network.containsKey("network.password"))
                 networkDTO.setPassword(network.get("network.password"));
-            if(network.containsKey("network.hotspot"))
+            if (network.containsKey("network.hotspot"))
                 networkDTO.setHotspot(Boolean.parseBoolean(network.get("network.hotspot")));
         }
         return networkDTO;
@@ -128,7 +146,7 @@ public class ConfigFileService {
     private TimeDTO readTimeConfig() {
         if (file.get("Timer").containsKey("timer.lastValue")) {
             TimeDTO timer = TimeDTO.parseFromString(file.get("Timer", "timer.lastValue"));
-            timer.setTimeThreadState(TimeThreadState.NEW);
+            timer.setThreadState(ThreadState.NEW);
             return timer;
         }
         return new TimeDTO();
@@ -144,7 +162,7 @@ public class ConfigFileService {
         logger.info("Wczytywanie konfiguracji bazy danych...");
         DatabaseConfigDTO databaseConfigDTO = new DatabaseConfigDTO();
         Profile.Section databaseSection = null;
-        if(file.containsKey("Database"))
+        if (file.containsKey("Database"))
             databaseSection = file.get("Database");
         else return databaseConfigDTO;
         if (databaseSection.containsKey("database.type")) {
@@ -185,32 +203,32 @@ public class ConfigFileService {
     private SavingPlacesDTO readSavingPlaces() throws Exception {
         SavingPlacesDTO savingPlacesDTO = new SavingPlacesDTO();
         Profile.Section savingPlaces = null;
-        if(file.containsKey("SavingPlaces"))
+        if (file.containsKey("SavingPlaces"))
             savingPlaces = file.get("SavingPlaces");
         else return savingPlacesDTO;
         if (savingPlaces.containsKey("savingPlaces.jpgComputerSave"))
             savingPlacesDTO.setJpgComputerSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgComputerSave")));
         if (savingPlaces.containsKey("savingPlaces.jpgRaspberryPendriveSave"))
-            savingPlacesDTO.setJpgRaspberryPendriveSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgRaspberryPendriveSave")));
+            savingPlacesDTO.setJpgPendriveSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgRaspberryPendriveSave")));
         if (savingPlaces.containsKey("savingPlaces.jpgDatabaseSave"))
             savingPlacesDTO.setJpgDatabaseSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.jpgDatabaseSave")));
         if (savingPlaces.containsKey("savingPlaces.matPendriveSave"))
             savingPlacesDTO.setMatPendriveSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.matPendriveSave")));
         if (savingPlaces.containsKey("savingPlaces.matDatabaseSave"))
             savingPlacesDTO.setMatDatabaseSave(Boolean.parseBoolean(savingPlaces.get("savingPlaces.matDatabaseSave")));
-        if(savingPlaces.containsKey("savingPlaces.jpgLocation") && savingPlaces.get("savingPlaces.jpgLocation") != null)
+        if (savingPlaces.containsKey("savingPlaces.jpgLocation") && savingPlaces.get("savingPlaces.jpgLocation") != null)
             savingPlacesDTO.setJpgComputerLocation(savingPlaces.get("savingPlaces.jpgLocation"));
         savingPlacesDTO.setDatabaseConfig(readDatabaseConfig());
         return savingPlacesDTO;
     }
 
     public void writeSavingPlaces(SavingPlacesDTO savingPlacesDTO) throws IOException {
-        file.put("SavingPlaces","savingPlaces.jpgComputerSave",savingPlacesDTO.getJpgComputerSave().toString());
-        file.put("SavingPlaces","savingPlaces.jpgRaspberryPendriveSave", savingPlacesDTO.getJpgPendriveSave().toString());
-        file.put("SavingPlaces","savingPlaces.jpgDatabaseSave",savingPlacesDTO.getJpgDatabaseSave().toString());
-        file.put("SavingPlaces","savingPlaces.jpgLocation",savingPlacesDTO.getJpgComputerLocation());
-        file.put("SavingPlaces","savingPlaces.matPendriveSave",savingPlacesDTO.getMatPendriveSave().toString());
-        file.put("SavingPlaces","savingPlaces.matDatabaseSave",savingPlacesDTO.getMatDatabaseSave().toString());
+        file.put("SavingPlaces", "savingPlaces.jpgComputerSave", savingPlacesDTO.getJpgComputerSave().toString());
+        file.put("SavingPlaces", "savingPlaces.jpgRaspberryPendriveSave", savingPlacesDTO.getJpgPendriveSave().toString());
+        file.put("SavingPlaces", "savingPlaces.jpgDatabaseSave", savingPlacesDTO.getJpgDatabaseSave().toString());
+        file.put("SavingPlaces", "savingPlaces.jpgLocation", savingPlacesDTO.getJpgComputerLocation());
+        file.put("SavingPlaces", "savingPlaces.matPendriveSave", savingPlacesDTO.getMatPendriveSave().toString());
+        file.put("SavingPlaces", "savingPlaces.matDatabaseSave", savingPlacesDTO.getMatDatabaseSave().toString());
         writeDatabaseConfigDTO(savingPlacesDTO.getDatabaseConfig());
         file.store();
         this.savingPlacesDTO = savingPlacesDTO;
@@ -227,17 +245,16 @@ public class ConfigFileService {
     private UsernameAndPasswordDTO readUsernameAndPasswordDTOFromFile() {
         UsernameAndPasswordDTO usernameAndPasswordDTO = new UsernameAndPasswordDTO();
         Profile.Section security = null;
-        if(file.containsKey("Security")) {
+        if (file.containsKey("Security")) {
             security = file.get("Security");
-        }
-        else return usernameAndPasswordDTO;
-        if(security.containsKey("security.enabled")) {
+        } else return usernameAndPasswordDTO;
+        if (security.containsKey("security.enabled")) {
             usernameAndPasswordDTO.setEnabled(Boolean.parseBoolean(security.get("security.enabled")));
         }
-        if(security.containsKey("security.username")) {
+        if (security.containsKey("security.username")) {
             usernameAndPasswordDTO.setUsername(security.get("security.username"));
         }
-        if(security.containsKey("security.password")) {
+        if (security.containsKey("security.password")) {
             usernameAndPasswordDTO.setPassword(security.get("security.password"));
         }
         return usernameAndPasswordDTO;

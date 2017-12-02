@@ -8,10 +8,10 @@ import java.sql.Blob;
 import java.time.LocalDateTime;
 
 /**
- * Created by jakub on 17.08.17.
+ * Encja Hibernate służąca do zapisu zdjęć JPG w bazie
  */
 @Entity
-public class JpgImageEntity {
+public class JpgImage {
 
     @Id
     @GeneratedValue

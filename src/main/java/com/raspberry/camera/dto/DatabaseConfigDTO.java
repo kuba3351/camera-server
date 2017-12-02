@@ -6,7 +6,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 /**
- * Created by jakub on 09.08.17.
+ * Klasa służąca do transferu ustawień bazy danych
  */
 public class DatabaseConfigDTO {
 

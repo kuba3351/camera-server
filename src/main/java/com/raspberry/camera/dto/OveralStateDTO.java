@@ -1,5 +1,8 @@
 package com.raspberry.camera.dto;
 
+/**
+ * Klasa służąca do transferu informacji o stanie ogólnym systemu
+ */
 public class OveralStateDTO {
     private Boolean securityEnabled;
     private Boolean databaseEnabled;

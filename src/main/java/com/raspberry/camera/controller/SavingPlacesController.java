@@ -1,9 +1,8 @@
 package com.raspberry.camera.controller;
 
 import com.raspberry.camera.dto.DatabaseConfigDTO;
-import com.raspberry.camera.service.ConfigFileService;
-import com.raspberry.camera.service.DatabaseService;
 import com.raspberry.camera.dto.SavingPlacesDTO;
+import com.raspberry.camera.service.DatabaseService;
 import com.raspberry.camera.service.SavingPlacesService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 /**
- * Created by jakub on 17.08.17.
+ * Kontroler odpowiedzialny za ustawienia miejsc zapisu
  */
 @RestController
 public class SavingPlacesController {
@@ -44,7 +43,7 @@ public class SavingPlacesController {
         outputDto.setJpgComputerSave(savingPlacesDTO.getJpgComputerSave());
         outputDto.setJpgComputerLocation(savingPlacesDTO.getJpgComputerLocation());
         outputDto.setJpgDatabaseSave(savingPlacesDTO.getJpgDatabaseSave());
-        outputDto.setJpgRaspberryPendriveSave(savingPlacesDTO.getJpgPendriveSave());
+        outputDto.setJpgPendriveSave(savingPlacesDTO.getJpgPendriveSave());
         outputDto.setMatDatabaseSave(savingPlacesDTO.getMatDatabaseSave());
         outputDto.setMatPendriveSave(savingPlacesDTO.getMatPendriveSave());
         outputDatabaseConfig.setHost(databaseConfigDTO.getHost());
@@ -60,12 +59,12 @@ public class SavingPlacesController {
         try {
             logger.info("Uaktualniam konfigurację miejsc zapisu...");
             String password = savingPlacesDTO.getDatabaseConfig().getPassword();
-            if(password == null) {
+            if (password == null) {
                 savingPlacesDTO.getDatabaseConfig()
                         .setPassword(savingPlacesService.getSavingPlacesDTO()
                                 .getDatabaseConfig().getPassword());
             }
-            if(savingPlacesDTO.getJpgDatabaseSave() || savingPlacesDTO.getMatDatabaseSave())
+            if (savingPlacesDTO.getJpgDatabaseSave() || savingPlacesDTO.getMatDatabaseSave())
                 databaseService.setUpDatabaseSession(savingPlacesDTO.getDatabaseConfig());
             savingPlacesService.setSavingPlacesDTO(savingPlacesDTO);
             logger.info("Uaktualnianie akończone...");

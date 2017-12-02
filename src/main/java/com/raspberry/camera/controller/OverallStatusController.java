@@ -1,8 +1,8 @@
 package com.raspberry.camera.controller;
 
+import com.raspberry.camera.dto.OveralStateDTO;
 import com.raspberry.camera.dto.SavingPlacesDTO;
 import com.raspberry.camera.service.*;
-import com.raspberry.camera.dto.OveralStateDTO;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,17 +11,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Kontroler odpowiedzialny za udostępnienie ogólnych informacji o systemie.
+ */
 @RestController
 public class OverallStatusController {
 
+    private final static Logger logger = Logger.getLogger(OverallStatusController.class);
     private DatabaseService databaseService;
     private NetworkService networkService;
     private PendriveService pendriveService;
     private SavingPlacesService savingPlacesService;
     private AuthenticationService authenticationService;
     private RobotService robotService;
-
-    private final static Logger logger = Logger.getLogger(OverallStatusController.class);
 
     @Autowired
     public OverallStatusController(DatabaseService databaseService, NetworkService networkService, PendriveService pendriveService, SavingPlacesService savingPlacesService, AuthenticationService authenticationService, RobotService robotService) {
@@ -47,11 +49,11 @@ public class OverallStatusController {
         overalStateDTO.setJpgLocation(savingPlacesDTO.getJpgComputerLocation());
         int cameras = 0;
         logger.info("Rozpoczynam wykrywanie podłączonych kamer...");
-        if(new File("/dev/video0").exists())
+        if (new File("/dev/video0").exists())
             cameras++;
-        if(new File("/dev/video1").exists())
+        if (new File("/dev/video1").exists())
             cameras++;
-        logger.info("Liczba wykrytych kamer:"+cameras);
+        logger.info("Liczba wykrytych kamer:" + cameras);
         overalStateDTO.setCameras(cameras);
         logger.info("Sprawdzam stan pendrive...");
         overalStateDTO.setPendriveEnabled(savingPlacesDTO.getMatPendriveSave() ||

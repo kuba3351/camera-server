@@ -1,9 +1,19 @@
 package com.raspberry.camera.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.constraints.NotNull;
+
+/**
+ * Klasa służąca do transferu danych autoryzacyjnych
+ */
 public class UsernameAndPasswordDTO {
+
+    @NotNull
     private Boolean isEnabled;
+
+    @NotNull
+    @NotEmpty
     private String username;
     private String password;
     private String token;

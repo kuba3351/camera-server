@@ -1,6 +1,8 @@
 package com.raspberry.camera.service;
 
+import com.raspberry.camera.dto.AutoPhotosDTO;
 import com.raspberry.camera.entity.RobotState;
+import com.raspberry.camera.entity.ThreadState;
 import lejos.hardware.Sound;
 import lejos.remote.ev3.RMIRegulatedMotor;
 import lejos.remote.ev3.RemoteEV3;
@@ -13,18 +15,37 @@ import java.rmi.RemoteException;
 
 public class RobotService {
 
-    private static RobotState robotState;
-    private ConfigFileService configFileService;
-
     private final static Logger logger = Logger.getLogger(RobotService.class);
+
+    public RobotState getRobotState() {
+        return robotState;
+    }
+
+    private RobotState robotState;
+    private ConfigFileService configFileService;
     private RMIRegulatedMotor left;
     private RMIRegulatedMotor right;
-
+    private RMIRegulatedMotor frontWheels;
     private RemoteEV3 robot;
-
-    private boolean robotConnected;
-
+    private static boolean robotConnected = false;
     private String robotIp;
+
+    public RobotService(ConfigFileService configFileService) {
+        this.configFileService = configFileService;
+        this.robotIp = configFileService.readRobotIp();
+
+        Thread thread = new Thread(() -> {
+            try {
+                connectToRobot();
+                robotConnected = true;
+                logger.info("Połączono z robotem.");
+            } catch (RemoteException | NotBoundException | MalformedURLException e) {
+                e.printStackTrace();
+                logger.warn("Błąd połączenia z robotem...");
+            }
+        });
+        thread.start();
+    }
 
     public String getRobotIp() {
         return robotIp;
@@ -32,25 +53,11 @@ public class RobotService {
 
     public void setRobotIp(String robotIp) throws IOException {
         this.robotIp = robotIp;
-        configFileService.saveRobotIp(robotIp);
+        configFileService.writeRobotIP(robotIp);
     }
 
-    public boolean isRobotConnected() {
+    public static boolean isRobotConnected() {
         return robotConnected;
-    }
-
-    public RobotService(ConfigFileService configFileService) {
-        this.configFileService = configFileService;
-        this.robotIp = configFileService.readRobotIp();
-        try {
-            connectToRobot();
-            robotConnected = true;
-            logger.info("Połączono z robotem.");
-        } catch (RemoteException | NotBoundException | MalformedURLException e) {
-            e.printStackTrace();
-            logger.warn("Błąd połączenia z robotem...");
-            robotConnected = false;
-        }
     }
 
     public void connectToRobot() throws RemoteException, NotBoundException, MalformedURLException {
@@ -61,7 +68,8 @@ public class RobotService {
         logger.info("Łączę z robotem...");
         robot = new RemoteEV3(ip);
         left = robot.createRegulatedMotor("A", 'L');
-        right = robot.createRegulatedMotor("B", 'L');
+        right = robot.createRegulatedMotor("D", 'L');
+        frontWheels = robot.createRegulatedMotor("frontWheels", 'L');
         robotState = RobotState.STOPPED;
         Sound.beep();
         Sound.buzz();
@@ -81,6 +89,7 @@ public class RobotService {
     public void stop() throws RemoteException {
         left.stop(true);
         right.stop(true);
+        frontWheels.stop(true);
         robotState = RobotState.STOPPED;
     }
 
@@ -95,24 +104,24 @@ public class RobotService {
     }
 
     public void goLeft() throws RemoteException {
-        left.stop(true);
+        frontWheels.forward();
     }
 
     public void leftFinish() throws RemoteException {
-        if(robotState.equals(RobotState.FORWARD))
+        if (robotState.equals(RobotState.FORWARD))
             left.forward();
-        else if(robotState.equals(RobotState.BACKWARD))
+        else if (robotState.equals(RobotState.BACKWARD))
             left.backward();
     }
 
     public void goRight() throws RemoteException {
-        right.stop(true);
+        frontWheels.backward();
     }
 
     public void rightFinish() throws RemoteException {
-        if(robotState.equals(RobotState.FORWARD))
+        if (robotState.equals(RobotState.FORWARD))
             right.forward();
-        else if(robotState.equals(RobotState.BACKWARD))
+        else if (robotState.equals(RobotState.BACKWARD))
             right.backward();
     }
 }

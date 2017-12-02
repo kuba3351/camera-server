@@ -2,6 +2,9 @@ package com.raspberry.camera.service;
 
 import java.rmi.RemoteException;
 
+/**
+ * Serwis służący do nasłuchiwania komunikatów od klienta przez RabbitMQ
+ */
 public class RabbitReceiver {
 
     private final RobotService robotService;
@@ -23,23 +26,17 @@ public class RabbitReceiver {
         try {
             if (message.equals("up")) {
                 robotService.goForward();
-            }
-            else if (message.equals("down")) {
+            } else if (message.equals("down")) {
                 robotService.goBackward();
-            }
-            else if(message.equals("stop")) {
+            } else if (message.equals("stop")) {
                 robotService.stop();
-            }
-            else if(message.equals("left")) {
+            } else if (message.equals("left")) {
                 robotService.goLeft();
-            }
-            else if(message.equals("right")) {
+            } else if (message.equals("right")) {
                 robotService.goRight();
-            }
-            else if(message.equals("leftReleased")) {
+            } else if (message.equals("leftReleased")) {
                 robotService.leftFinish();
-            }
-            else if(message.equals("rightReleased")) {
+            } else if (message.equals("rightReleased")) {
                 robotService.rightFinish();
             }
         } catch (RemoteException e) {

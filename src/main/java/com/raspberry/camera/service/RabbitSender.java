@@ -1,12 +1,13 @@
 package com.raspberry.camera.service;
 
 import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+/**
+ * Serwis służący do wysyłania komunikatów do kloenta przez RabbitMQ
+ */
 @Component
 public class RabbitSender {
 

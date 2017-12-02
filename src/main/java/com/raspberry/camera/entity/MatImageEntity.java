@@ -1,15 +1,15 @@
-package com.raspberry.camera.entity;;
+package com.raspberry.camera.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.*;
 import java.time.LocalDateTime;
+
+;
 
 /**
  * Created by jakub on 23.08.17.
  */
 @Entity
+@Table(name = "MatImage")
 public class MatImageEntity {
 
     @Id
@@ -17,6 +17,9 @@ public class MatImageEntity {
     private Long id;
 
     private int camera;
+    @Lob
+    private byte[] image;
+    private LocalDateTime time;
 
     public int getCamera() {
         return camera;
@@ -26,9 +29,6 @@ public class MatImageEntity {
         this.camera = camera;
     }
 
-    @Lob
-    private byte[] image;
-
     public byte[] getImage() {
         return image;
     }
@@ -37,18 +37,16 @@ public class MatImageEntity {
         this.image = image;
     }
 
-    private LocalDateTime time;
-
     public Long getId() {
         return id;
     }
 
-    public LocalDateTime getTime() {
-        return time;
-    }
-
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public LocalDateTime getTime() {
+        return time;
     }
 
     public void setTime(LocalDateTime time) {

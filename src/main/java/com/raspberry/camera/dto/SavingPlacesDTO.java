@@ -3,7 +3,7 @@ package com.raspberry.camera.dto;
 import javax.validation.constraints.NotNull;
 
 /**
- * Created by jakub on 09.08.17.
+ * Klasa służąca do transferu ustawień miejsc zapisu
  */
 public class SavingPlacesDTO {
 
@@ -12,7 +12,7 @@ public class SavingPlacesDTO {
     private String jpgComputerLocation;
 
     @NotNull
-    private Boolean jpgRaspberryPendriveSave;
+    private Boolean jpgPendriveSave;
 
     @NotNull
     private Boolean jpgDatabaseSave;
@@ -25,6 +25,14 @@ public class SavingPlacesDTO {
 
     @NotNull
     private Boolean matDatabaseSave;
+
+    public Boolean getJpgPendriveSave() {
+        return jpgPendriveSave;
+    }
+
+    public void setJpgPendriveSave(Boolean jpgPendriveSave) {
+        this.jpgPendriveSave = jpgPendriveSave;
+    }
 
     public Boolean getJpgComputerSave() {
         return jpgComputerSave;
@@ -40,14 +48,6 @@ public class SavingPlacesDTO {
 
     public void setJpgComputerLocation(String jpgComputerLocation) {
         this.jpgComputerLocation = jpgComputerLocation;
-    }
-
-    public Boolean getJpgPendriveSave() {
-        return jpgRaspberryPendriveSave;
-    }
-
-    public void setJpgRaspberryPendriveSave(Boolean jpgRaspberryPendriveSave) {
-        this.jpgRaspberryPendriveSave = jpgRaspberryPendriveSave;
     }
 
     public Boolean getJpgDatabaseSave() {
