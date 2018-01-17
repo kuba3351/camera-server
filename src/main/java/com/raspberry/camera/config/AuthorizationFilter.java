@@ -104,16 +104,15 @@ class AuthorizationFilter implements Filter {
     }
 
     private boolean isTokenValid(String username, LocalDateTime tokenDateTime, LocalDateTime expirationTime, String passwordCharsString) {
-        Duration duration = Duration.between(tokenDateTime, expirationTime);
         String password = usernameAndPasswordDTO.getPassword();
         int length = password.length();
 
         return tokenDateTime.equals(SecurityConfig.appStartDate)
                 && username.equals(usernameAndPasswordDTO.getUsername())
-                && passwordCharsString.charAt(0) == password.charAt(Long.valueOf(duration.get(SECONDS) % length).intValue())
-                && passwordCharsString.charAt(1) == password.charAt(Long.valueOf(duration.get(NANOS) % length).intValue())
-                && passwordCharsString.charAt(2) == password.charAt(Long.valueOf((duration.get(SECONDS) / 10) % length).intValue())
-                && passwordCharsString.charAt(3) == password.charAt((Math.abs(duration.hashCode() % length)));
+                && passwordCharsString.charAt(0) == password.charAt(tokenDateTime.getSecond() % length)
+                && passwordCharsString.charAt(1) == password.charAt(tokenDateTime.getMinute() % length)
+                && passwordCharsString.charAt(2) == password.charAt(tokenDateTime.getHour() % length)
+                && passwordCharsString.charAt(3) == password.charAt(expirationTime.getMinute() % length);
     }
 
     @Override

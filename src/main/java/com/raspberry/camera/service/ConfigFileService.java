@@ -1,8 +1,9 @@
 package com.raspberry.camera.service;
 
 import com.raspberry.camera.dto.*;
-import com.raspberry.camera.entity.DatabaseType;
-import com.raspberry.camera.entity.ThreadState;
+import com.raspberry.camera.other.CameraType;
+import com.raspberry.camera.other.DatabaseType;
+import com.raspberry.camera.other.ThreadState;
 import org.apache.log4j.Logger;
 import org.ini4j.Profile;
 import org.ini4j.Wini;
@@ -23,7 +24,22 @@ public class ConfigFileService {
     private TimeDTO timeDTO;
     private UsernameAndPasswordDTO usernameAndPasswordDTO;
     private NetworkDTO networkDTO;
-    private PhotoResolutionDTO photoResolutionDTO;
+    private PhotoDTO photoDTO;
+
+    public RobotDTO getRobotDTO() {
+        return robotDTO;
+    }
+
+    public void setRobotDTO(RobotDTO robotDTO) {
+        this.robotDTO = robotDTO;
+    }
+
+    private RobotDTO robotDTO;
+
+    public AutoPhotosDTO getAutoPhotosDTO() {
+        return autoPhotosDTO;
+    }
+
     private AutoPhotosDTO autoPhotosDTO;
     private Wini file;
 
@@ -43,14 +59,16 @@ public class ConfigFileService {
         logger.info("Wczytywanie konfiguracji sieci...");
         networkDTO = readNetworkDTO();
         logger.info("Wczytywanie konfiguracji rozdzielczości...");
-        photoResolutionDTO = readPhotoResolution();
+        photoDTO = readPhotoDTO();
         logger.info("Wczytywanie konfiguracji automatycznych zdjęć...");
         autoPhotosDTO = readAutoPhotosDTO();
+        logger.info("Wczytywanie ustawień robota...");
+        robotDTO = readRobotDTO();
         logger.info("Zakończono wczytywanie konfiguracji.");
     }
 
-    public PhotoResolutionDTO getPhotoResolutionDTO() {
-        return photoResolutionDTO;
+    public PhotoDTO getPhotoDTO() {
+        return photoDTO;
     }
 
     public NetworkDTO getNetworkDTO() {
@@ -82,27 +100,75 @@ public class ConfigFileService {
         return autoPhotosDTO;
     }
 
+    public RobotDTO readRobotDTO() {
+        RobotDTO robotDTO = new RobotDTO();
+        Profile.Section robot = file.get("Robot");
+        if(robot.containsKey("robot.left")) {
+            robotDTO.setLeft(robot.get("robot.left"));
+        }
+        if(robot.containsKey("robot.right")) {
+            robotDTO.setRight(robot.get("robot.right"));
+        }
+        if(robot.containsKey("robot.distanceSensor")) {
+            robotDTO.setDistanceSensor(robot.get("robot.distanceSensor"));
+        }
+        if(robot.containsKey("robot.connect")) {
+            robotDTO.setConnect(Boolean.parseBoolean(robot.get("robot.connect")));
+        }
+        if(robot.containsKey("robot.shouldStopOnPhotos")) {
+            robotDTO.setShouldStopOnPhotos(Boolean.parseBoolean(robot.get("robot.shouldStopOnPhotos")));
+        }
+        return robotDTO;
+    }
+
+    public void writeRobotDto(RobotDTO robotDTO) throws IOException {
+        file.put("Robot", "robot.left", robotDTO.getLeft());
+        file.put("Robot", "robot.right", robotDTO.getRight());
+        file.put("Robot", "robot.distanceSensor", robotDTO.getDistanceSensor());
+        file.put("Robot", "robot.connect", robotDTO.getConnect().toString());
+        file.put("Robot", "robot.shouldStopOnPhotos", robotDTO.getShouldStopOnPhotos().toString());
+        file.store();
+    }
+
     public void writeAutophotosDTO(AutoPhotosDTO autoPhotosDTO) throws IOException {
         file.put("AutoPhotos", "autophotos.enabled", autoPhotosDTO.getAutoPhotosEnabled().toString());
         file.put("AutoPhotos", "autophotos.distance", autoPhotosDTO.getAutoPhotosDistance().toString());
         file.store();
     }
 
-    public PhotoResolutionDTO readPhotoResolution() {
-        PhotoResolutionDTO photoResolutionDTO = new PhotoResolutionDTO();
+    public PhotoDTO readPhotoDTO() {
+        PhotoDTO photoDTO = new PhotoDTO();
         Profile.Section photo = file.get("Photo");
-        if (photo.containsKey("photo.width"))
-            photoResolutionDTO.setWidth(Integer.parseInt(photo.get("photo.width")));
-        if (photo.containsKey("photo.height"))
-            photoResolutionDTO.setHeigth(Integer.parseInt(photo.get("photo.height")));
-        return photoResolutionDTO;
+        if(photo.containsKey("photo.width"))
+            photoDTO.setWidth(Integer.parseInt(photo.get("photo.width")));
+        if(photo.containsKey("photo.height"))
+            photoDTO.setHeigth(Integer.parseInt(photo.get("photo.height")));
+        if(photo.containsKey("photo.cameraType"))
+            switch(photo.get("photo.cameraType")) {
+                case "raspberry":
+                    photoDTO.setCameraType(CameraType.RASPBERRY);
+                    break;
+                case "usb":
+                    photoDTO.setCameraType(CameraType.USB);
+                    break;
+                default: throw new RuntimeException("Cannot read photo.cameraType");
+            }
+        return photoDTO;
     }
 
-    public void writePhotoResolution(PhotoResolutionDTO photoResolutionDTO) throws IOException {
-        file.put("Photo", "photo.width", photoResolutionDTO.getWidth());
-        file.put("Photo", "photo.height", photoResolutionDTO.getHeigth());
+    public void writePhotoDTO(PhotoDTO photoDTO) throws IOException {
+        file.put("Photo", "photo.width", photoDTO.getWidth());
+        file.put("Photo", "photo.height", photoDTO.getHeigth());
+        switch(photoDTO.getCameraType()) {
+            case USB:
+                file.put("Photo", "photo.cameraType", "usb");
+                break;
+            case RASPBERRY:
+                file.put("Photo", "photo.cameraType", "raspberry");
+                break;
+        }
         file.store();
-        this.photoResolutionDTO = photoResolutionDTO;
+        this.photoDTO = photoDTO;
     }
 
     private NetworkDTO readNetworkDTO() {
@@ -174,7 +240,7 @@ public class ConfigFileService {
                     databaseConfigDTO.setDatabaseType(DatabaseType.MYSQL);
                     break;
                 default:
-                    throw new Exception("Database type not supported");
+                    throw new Exception("Cannot read database.type");
             }
         }
         if (databaseSection.containsKey("database.host"))
@@ -202,7 +268,7 @@ public class ConfigFileService {
 
     private SavingPlacesDTO readSavingPlaces() throws Exception {
         SavingPlacesDTO savingPlacesDTO = new SavingPlacesDTO();
-        Profile.Section savingPlaces = null;
+        Profile.Section savingPlaces;
         if (file.containsKey("SavingPlaces"))
             savingPlaces = file.get("SavingPlaces");
         else return savingPlacesDTO;

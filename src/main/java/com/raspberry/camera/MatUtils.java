@@ -1,8 +1,10 @@
 package com.raspberry.camera;
 
-import com.raspberry.camera.entity.MatImage;
+import com.raspberry.camera.other.MatContainer;
 import org.opencv.core.Mat;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -24,12 +26,12 @@ public class MatUtils {
         return tab;
     }
 
-    public static ByteArrayOutputStream writeMat(MatImage matImage) throws IOException {
+    public static ByteArrayOutputStream writeMat(MatContainer matContainer) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         StringBuilder builder = new StringBuilder();
         builder.append("%");
-        builder.append("YAML:1.0\n" + "---\n" + "Matrix: !!opencv-matrix\n" + "   rows: ").append(matImage.getRows()).append("\n").append("   cols: ").append(matImage.getCols()).append("\n").append("   dt: \"3u\"\n").append("   data: [ ");
-        int[] data = matImage.getData();
+        builder.append("YAML:1.0\n" + "---\n" + "Matrix: !!opencv-matrix\n" + "   rows: ").append(matContainer.getRows()).append("\n").append("   cols: ").append(matContainer.getCols()).append("\n").append("   dt: \"3u\"\n").append("   data: [ ");
+        int[] data = matContainer.getData();
         for (int i = 0; i < data.length; i++) {
             builder.append(data[i]);
             if (i != data.length - 1)
@@ -40,5 +42,23 @@ public class MatUtils {
         builder.append("]");
         outputStream.write(builder.toString().getBytes());
         return outputStream;
+    }
+
+    public static MatContainer generateMatFromBufferedImage(BufferedImage bufferedImage) {
+        MatContainer matContainer = new MatContainer();
+        matContainer.setCols(bufferedImage.getHeight());
+        matContainer.setRows(bufferedImage.getWidth());
+        int[] data = new int[matContainer.getCols()*matContainer.getRows()*3];
+        int z = 0;
+        for(int i = 0;i<matContainer.getCols();i++) {
+            for(int j = 0;j<matContainer.getRows();j++) {
+                Color pixel = new Color(bufferedImage.getRGB(i, j));
+                data[z++] = pixel.getRed();
+                data[z++] = pixel.getGreen();
+                data[z++] = pixel.getBlue();
+            }
+        }
+        matContainer.setData(data);
+        return matContainer;
     }
 }

@@ -15,6 +15,15 @@ public class OveralStateDTO {
     private String jpgLocation;
     private Integer cameras;
     private Boolean robotConnected;
+    private Boolean connectRobotEnabled;
+
+    public Boolean getConnectRobotEnabled() {
+        return connectRobotEnabled;
+    }
+
+    public void setConnectRobotEnabled(Boolean connectRobotEnabled) {
+        this.connectRobotEnabled = connectRobotEnabled;
+    }
 
     public Boolean getRobotConnected() {
         return robotConnected;

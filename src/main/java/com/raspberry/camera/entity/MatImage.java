@@ -1,47 +1,52 @@
 package com.raspberry.camera.entity;
 
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
 /**
- * Encja Hibernate służąca do zapisu macierzy Mat w bazie
+ * Created by jakub on 23.08.17.
  */
+@Entity
 public class MatImage {
-    private int rows;
-    private int cols;
-    private String dt;
-    private int[] data;
 
-    public MatImage() {
-        dt = "3u";
+    @Id
+    @GeneratedValue
+    private Long id;
+    private int camera;
+
+    @Lob
+    private byte[] image;
+    private LocalDateTime time;
+
+    public int getCamera() {
+        return camera;
     }
 
-    public int getRows() {
-        return rows;
+    public void setCamera(int camera) {
+        this.camera = camera;
     }
 
-    public void setRows(int rows) {
-        this.rows = rows;
+    public byte[] getImage() {
+        return image;
     }
 
-    public int getCols() {
-        return cols;
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 
-    public void setCols(int cols) {
-        this.cols = cols;
+    public Long getId() {
+        return id;
     }
 
-    public String getDt() {
-        return dt;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setDt(String dt) {
-        this.dt = dt;
+    public LocalDateTime getTime() {
+        return time;
     }
 
-    public int[] getData() {
-        return data;
-    }
-
-    public void setData(int[] data) {
-        this.data = data;
+    public void setTime(LocalDateTime time) {
+        this.time = time;
     }
 }

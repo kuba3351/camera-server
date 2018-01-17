@@ -1,8 +1,8 @@
 package com.raspberry.camera.service;
 
 import com.raspberry.camera.MatUtils;
-import com.raspberry.camera.entity.MatImage;
-import com.raspberry.camera.entity.Photo;
+import com.raspberry.camera.other.MatContainer;
+import com.raspberry.camera.other.Photo;
 import org.apache.log4j.Logger;
 import org.opencv.core.Mat;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,24 +95,24 @@ public class PendriveService {
             File matFile = new File(matFilePath.replace(":", "-"));
             matFile.createNewFile();
             FileWriter fileWriter = new FileWriter(matFile);
-            MatImage matImage = new MatImage();
+            MatContainer matContainer = new MatContainer();
             Mat mat = photo1.getMatImage();
-            matImage.setCols(mat.cols());
-            matImage.setRows(mat.rows());
-            matImage.setData(MatUtils.extractDataFromMat(mat));
-            ByteArrayOutputStream outputStream = MatUtils.writeMat(matImage);
+            matContainer.setCols(mat.cols());
+            matContainer.setRows(mat.rows());
+            matContainer.setData(MatUtils.extractDataFromMat(mat));
+            ByteArrayOutputStream outputStream = MatUtils.writeMat(matContainer);
             fileWriter.write(new String(outputStream.toByteArray()));
             fileWriter.close();
         }
         if (photo2 != null) {
             String matFilePath = matPath.toString() + "/" + LocalDateTime.now() + "-camera2.yml";
             FileWriter fileWriter = new FileWriter(new File(matFilePath.replace(":", "-")));
-            MatImage matImage = new MatImage();
+            MatContainer matContainer = new MatContainer();
             Mat mat = photo2.getMatImage();
-            matImage.setCols(mat.cols());
-            matImage.setRows(mat.rows());
-            matImage.setData(MatUtils.extractDataFromMat(mat));
-            ByteArrayOutputStream outputStream = MatUtils.writeMat(matImage);
+            matContainer.setCols(mat.cols());
+            matContainer.setRows(mat.rows());
+            matContainer.setData(MatUtils.extractDataFromMat(mat));
+            ByteArrayOutputStream outputStream = MatUtils.writeMat(matContainer);
             fileWriter.write(new String(outputStream.toByteArray()));
             fileWriter.close();
         }

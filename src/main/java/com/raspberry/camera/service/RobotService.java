@@ -1,9 +1,7 @@
 package com.raspberry.camera.service;
 
-import com.raspberry.camera.dto.AutoPhotosDTO;
-import com.raspberry.camera.entity.RobotState;
-import com.raspberry.camera.entity.ThreadState;
-import lejos.hardware.Sound;
+import com.raspberry.camera.dto.RobotDTO;
+import com.raspberry.camera.other.RobotState;
 import lejos.remote.ev3.RMIRegulatedMotor;
 import lejos.remote.ev3.RemoteEV3;
 import org.apache.log4j.Logger;
@@ -16,35 +14,51 @@ import java.rmi.RemoteException;
 public class RobotService {
 
     private final static Logger logger = Logger.getLogger(RobotService.class);
-
-    public RobotState getRobotState() {
-        return robotState;
-    }
-
-    private RobotState robotState;
+    private static RobotState robotState;
+    private static RobotDTO robotDTO;
+    private static volatile boolean robotConnected = false;
     private ConfigFileService configFileService;
     private RMIRegulatedMotor left;
     private RMIRegulatedMotor right;
-    private RMIRegulatedMotor frontWheels;
     private RemoteEV3 robot;
-    private static boolean robotConnected = false;
     private String robotIp;
 
     public RobotService(ConfigFileService configFileService) {
         this.configFileService = configFileService;
         this.robotIp = configFileService.readRobotIp();
-
+        robotDTO = configFileService.getRobotDTO();
         Thread thread = new Thread(() -> {
             try {
                 connectToRobot();
-                robotConnected = true;
                 logger.info("Połączono z robotem.");
             } catch (RemoteException | NotBoundException | MalformedURLException e) {
                 e.printStackTrace();
                 logger.warn("Błąd połączenia z robotem...");
             }
         });
-        thread.start();
+        if(robotDTO.getConnect())
+            thread.start();
+    }
+
+    public static RobotState getRobotState() {
+        return robotState;
+    }
+
+    public static void setRobotState(RobotState robotState) {
+        RobotService.robotState = robotState;
+    }
+
+    public static RobotDTO getRobotDTO() {
+        return robotDTO;
+    }
+
+    public void setRobotDTO(RobotDTO robotDTO) throws IOException {
+        RobotService.robotDTO = robotDTO;
+        configFileService.writeRobotDto(robotDTO);
+    }
+
+    public static boolean isRobotConnected() {
+        return robotConnected;
     }
 
     public String getRobotIp() {
@@ -56,10 +70,6 @@ public class RobotService {
         configFileService.writeRobotIP(robotIp);
     }
 
-    public static boolean isRobotConnected() {
-        return robotConnected;
-    }
-
     public void connectToRobot() throws RemoteException, NotBoundException, MalformedURLException {
         connectToRobot(robotIp);
     }
@@ -67,13 +77,11 @@ public class RobotService {
     public void connectToRobot(String ip) throws RemoteException, NotBoundException, MalformedURLException {
         logger.info("Łączę z robotem...");
         robot = new RemoteEV3(ip);
-        left = robot.createRegulatedMotor("A", 'L');
-        right = robot.createRegulatedMotor("D", 'L');
-        frontWheels = robot.createRegulatedMotor("frontWheels", 'L');
+        left = robot.createRegulatedMotor(robotDTO.getLeft(), 'L');
+        right = robot.createRegulatedMotor(robotDTO.getRight(), 'L');
         robotState = RobotState.STOPPED;
-        Sound.beep();
-        Sound.buzz();
         robotIp = ip;
+        robotConnected = true;
     }
 
     public void goForward() throws RemoteException {
@@ -89,7 +97,6 @@ public class RobotService {
     public void stop() throws RemoteException {
         left.stop(true);
         right.stop(true);
-        frontWheels.stop(true);
         robotState = RobotState.STOPPED;
     }
 
@@ -104,7 +111,7 @@ public class RobotService {
     }
 
     public void goLeft() throws RemoteException {
-        frontWheels.forward();
+        left.stop(true);
     }
 
     public void leftFinish() throws RemoteException {
@@ -115,7 +122,7 @@ public class RobotService {
     }
 
     public void goRight() throws RemoteException {
-        frontWheels.backward();
+        right.stop(true);
     }
 
     public void rightFinish() throws RemoteException {

@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="commons-cli">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/commons-cli.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/dbusjava.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/ev3classes.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/ev3tools.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/jcommon.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/jfreechart.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/lib/jsch-0.1.50.jar!/" />
+      <root url="jar://$USER_HOME$/biblioteki/Robot/dist/Robot.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

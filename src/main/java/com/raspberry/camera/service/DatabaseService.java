@@ -4,9 +4,9 @@ import com.raspberry.camera.MatUtils;
 import com.raspberry.camera.dto.DatabaseConfigDTO;
 import com.raspberry.camera.dto.SavingPlacesDTO;
 import com.raspberry.camera.entity.JpgImage;
+import com.raspberry.camera.other.MatContainer;
 import com.raspberry.camera.entity.MatImage;
-import com.raspberry.camera.entity.MatImageEntity;
-import com.raspberry.camera.entity.Photo;
+import com.raspberry.camera.other.Photo;
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -16,6 +16,8 @@ import org.opencv.core.Mat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.Blob;
@@ -72,7 +74,7 @@ public class DatabaseService {
         logger.info("Łączę z bazą...");
         Configuration configuration = new Configuration()
                 .addAnnotatedClass(JpgImage.class)
-                .addAnnotatedClass(MatImageEntity.class);
+                .addAnnotatedClass(MatImage.class);
         switch (databaseConfigDTO.getDatabaseType()) {
             case MYSQL:
                 configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
@@ -107,47 +109,50 @@ public class DatabaseService {
             Blob blob2 = Hibernate.getLobCreator(databaseSession).createBlob(photo2.getJpgImage());
             jpgImage.setCamera2(blob2);
         }
-        Transaction transaction = databaseSession.beginTransaction();
-        databaseSession.save(jpgImage);
-        transaction.commit();
+        saveObject(jpgImage);
         logger.info("Zdjęcie zapisane.");
     }
 
-    public void saveMatToDatabase(Mat mat, Mat mat2) throws Exception {
+    private synchronized void saveObject(Object object) throws Exception {
+        Transaction transaction;
+        try {
+            transaction = databaseSession.beginTransaction();
+        } catch (Exception e) {
+            e.printStackTrace();
+            databaseSession.getTransaction().rollback();
+            throw new Exception();
+        }
+        try {
+            databaseSession.save(object);
+        } catch (Exception e) {
+            e.printStackTrace();
+            transaction.rollback();
+            throw new Exception("Transaction rolled back!");
+        }
+        transaction.commit();
+    }
+
+    public void saveMatFromMatContainer(MatContainer mat1, MatContainer mat2) throws Exception {
         logger.info("Zapisuję macierz Mat do bazy...");
         if (databaseSession == null || !databaseSession.isOpen()) {
             setUpDatabaseSession(databaseConfigDTO);
         }
-        Transaction transaction = databaseSession.getTransaction();
         LocalDateTime now = LocalDateTime.now();
-        if (mat != null) {
-            int[] tab1 = MatUtils.extractDataFromMat(mat);
-            MatImage matImage1 = new MatImage();
-            matImage1.setCols(mat.cols());
-            matImage1.setRows(mat.rows());
-            matImage1.setData(tab1);
-            ByteArrayOutputStream outputStream = MatUtils.writeMat(matImage1);
-            MatImageEntity matImageEntity = new MatImageEntity();
-            matImageEntity.setTime(now);
-            matImageEntity.setImage(outputStream.toByteArray());
-            matImageEntity.setCamera(1);
-            transaction = databaseSession.beginTransaction();
-            databaseSession.save(matImageEntity);
+        if(mat1 != null) {
+            MatImage matImage = new MatImage();
+            matImage.setTime(now);
+            matImage.setImage(MatUtils.writeMat(mat1).toByteArray());
+            matImage.setCamera(1);
+            saveObject(matImage);
             logger.info("Zapisano macierz 1");
         }
-        if (mat2 != null) {
-            int[] tab2 = MatUtils.extractDataFromMat(mat2);
-            MatImage matImage2 = new MatImage();
-            matImage2.setRows(mat2.rows());
-            matImage2.setCols(mat2.cols());
-            matImage2.setData(tab2);
-            ByteArrayOutputStream outputStream2 = MatUtils.writeMat(matImage2);
-            MatImageEntity matImageEntity2 = new MatImageEntity();
-            matImageEntity2.setTime(now);
-            matImageEntity2.setImage(outputStream2.toByteArray());
-            matImageEntity2.setCamera(2);
+        if(mat2 != null) {
+            MatImage matImage = new MatImage();
+            matImage.setTime(now);
+            matImage.setImage(MatUtils.writeMat(mat2).toByteArray());
+            matImage.setCamera(2);
+            saveObject(matImage);
             logger.info("Zapisano macierz 2");
         }
-        transaction.commit();
     }
 }

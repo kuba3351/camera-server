@@ -1,7 +1,8 @@
 package com.raspberry.camera.controller;
 
 import com.raspberry.camera.dto.AutoPhotosDTO;
-import com.raspberry.camera.dto.RobotIpDTO;
+import com.raspberry.camera.dto.RobotDTO;
+import com.raspberry.camera.service.ConfigFileService;
 import com.raspberry.camera.service.RobotService;
 import com.raspberry.camera.service.SensorDistanceListenerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,13 +43,10 @@ public class RobotController {
     }
 
     @PostMapping("/api/robot/connectToRobot")
-    public ResponseEntity connectToRobotWithIp(@RequestBody @Valid RobotIpDTO robotIpDTO) {
+    public ResponseEntity connectToRobotWithIp(@RequestBody @Valid RobotDTO robotDTO) {
         try {
-            robotService.connectToRobot(robotIpDTO.getIp());
-            robotService.setRobotIp(robotIpDTO.getIp());
-            if(sensorDistanceListenerService.getAutoPhotosDTO().getAutoPhotosEnabled()) {
-                sensorDistanceListenerService.startListener();
-            }
+            robotService.connectToRobot(robotDTO.getIp());
+            robotService.setRobotIp(robotDTO.getIp());
             return new ResponseEntity(HttpStatus.OK);
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
@@ -65,6 +63,22 @@ public class RobotController {
     public ResponseEntity setAutoPhotos(@RequestBody AutoPhotosDTO autoPhotosDTO) {
         try {
             sensorDistanceListenerService.setAutoPhotosDTO(autoPhotosDTO);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/api/robot")
+    public RobotDTO getRobotDTO() {
+        return RobotService.getRobotDTO();
+    }
+
+    @PostMapping("/api/robot")
+    public ResponseEntity setRobotDTO(@RequestBody RobotDTO robotDTO) {
+        try {
+            robotService.setRobotDTO(robotDTO);
             return new ResponseEntity(HttpStatus.OK);
         } catch (IOException e) {
             e.printStackTrace();

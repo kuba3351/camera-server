@@ -1,4 +1,4 @@
-package com.raspberry.camera.entity;
+package com.raspberry.camera.other;
 
 /**
  * Created by jakub on 09.08.17.

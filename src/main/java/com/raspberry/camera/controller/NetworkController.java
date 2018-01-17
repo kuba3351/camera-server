@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,24 +28,31 @@ public class NetworkController {
         this.networkService = networkService;
     }
 
-    @GetMapping("/api/network/getNetworkInfo")
+    @GetMapping("/api/network")
     public NetworkDTO getNetworkInfo() {
         logger.info("Żądanie pobrania ustawień sieci...");
         NetworkDTO networkDTOFromConfig = networkService.getNetworkDTO();
         NetworkDTO responseNetworkDTO = new NetworkDTO();
         responseNetworkDTO.setSsid(networkDTOFromConfig.getSsid());
+        responseNetworkDTO.setHotspot(networkDTOFromConfig.getHotspot());
         return responseNetworkDTO;
     }
 
     @PostMapping("/api/network")
-    public ResponseEntity connectToNetwork(@RequestBody @Valid NetworkDTO networkDTO) throws IOException, InterruptedException {
+    public ResponseEntity connectToNetwork(@RequestBody @Valid NetworkDTO networkDTO)
+            throws IOException, InterruptedException {
         networkService.setNetworkDTO(networkDTO);
         logger.info("Zmieniono ustawień sieci. Wymagany restart.");
         return new ResponseEntity(HttpStatus.OK);
     }
 
     @GetMapping("/api/network/checkAvailableWifi")
-    public List<NetworkViewDTO> checkWifi() throws IOException, InterruptedException {
-        return networkService.checkAvailableNetworks();
+    public List<NetworkViewDTO> checkWifi() {
+        try {
+            return networkService.checkAvailableNetworks();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 }

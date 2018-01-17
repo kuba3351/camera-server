@@ -1,6 +1,6 @@
 package com.raspberry.camera.dto;
 
-import com.raspberry.camera.entity.ThreadState;
+import com.raspberry.camera.other.ThreadState;
 
 import javax.validation.constraints.NotNull;
 

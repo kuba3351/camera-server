@@ -62,13 +62,12 @@ public class AuthenticationController {
         token.append(SecurityConfig.appStartDate);
         token.append(";");
         StringBuilder passwordCharsString = new StringBuilder();
-        Duration duration = Duration.between(SecurityConfig.appStartDate, expiration);
         String password = usernameAndPasswordDTO.getPassword();
         int passwordLength = password.length();
-        passwordCharsString.append(password.charAt(Long.valueOf(duration.get(SECONDS) % passwordLength).intValue()));
-        passwordCharsString.append(password.charAt(Long.valueOf(duration.get(NANOS) % passwordLength).intValue()));
-        passwordCharsString.append(password.charAt(Long.valueOf((duration.get(SECONDS) / 10) % passwordLength).intValue()));
-        passwordCharsString.append(password.charAt(Math.abs(duration.hashCode() % passwordLength)));
+        passwordCharsString.append(password.charAt(Long.valueOf(SecurityConfig.appStartDate.getSecond() % passwordLength).intValue()));
+        passwordCharsString.append(password.charAt(Long.valueOf(SecurityConfig.appStartDate.getMinute() % passwordLength).intValue()));
+        passwordCharsString.append(password.charAt(Long.valueOf(SecurityConfig.appStartDate.getHour() % passwordLength).intValue()));
+        passwordCharsString.append(password.charAt(Math.abs(expiration.getMinute() % passwordLength)));
         token.append(expiration);
         token.append(";");
         token.append(passwordCharsString);
@@ -89,14 +88,19 @@ public class AuthenticationController {
      * @throws IOException
      */
     @PostMapping("/api/saveAuthInfo")
-    public ResponseEntity saveAuthInfo(@RequestBody @Valid UsernameAndPasswordDTO usernameAndPasswordDTO) throws IOException {
+    public ResponseEntity saveAuthInfo(@RequestBody @Valid UsernameAndPasswordDTO usernameAndPasswordDTO) {
         String password = usernameAndPasswordDTO.getPassword();
         if (password == null || password.isEmpty()) {
             usernameAndPasswordDTO
                     .setPassword(authenticationService.getUsernameAndPasswordDTO()
                             .getPassword());
         }
-        authenticationService.setUsernameAndPasswordDTO(usernameAndPasswordDTO);
+        try {
+            authenticationService.setUsernameAndPasswordDTO(usernameAndPasswordDTO);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         logger.info("Zaktualizowano dane uwierzytelniające.");
         return new ResponseEntity(HttpStatus.OK);
     }

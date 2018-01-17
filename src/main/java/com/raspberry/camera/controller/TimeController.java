@@ -1,7 +1,7 @@
 package com.raspberry.camera.controller;
 
 import com.raspberry.camera.dto.TimeDTO;
-import com.raspberry.camera.entity.ThreadState;
+import com.raspberry.camera.other.ThreadState;
 import com.raspberry.camera.service.TimerService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class TimeController {
     private TimeDTO timer;
 
     @Autowired
-    public TimeController(TimerService timerService) throws IOException {
+    public TimeController(TimerService timerService) {
         timeThread = new Thread(timerService);
         this.timerService = timerService;
     }
@@ -59,7 +59,7 @@ public class TimeController {
     }
 
     @GetMapping("/api/time/start")
-    public ResponseEntity start() throws Exception {
+    public ResponseEntity start() {
         logger.info("Odebrano żądanie uruchomienia czasomierza.");
         if (timeThread.getState().equals(Thread.State.NEW))
             timeThread.start();
@@ -71,7 +71,7 @@ public class TimeController {
     }
 
     @GetMapping("/api/time/stop")
-    public ResponseEntity stop() throws Exception {
+    public ResponseEntity stop() {
         logger.info("Odebrano żądanie wtrzymania czasomierza.");
         if (timerService.getTimer().getThreadState().equals(ThreadState.RUNNING))
             timeThread.suspend();

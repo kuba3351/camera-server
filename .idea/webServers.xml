@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="41233bf7-aa8b-4686-965a-b531f5c1c1ff" name="raspberry" url="http://a">
+        <fileTransfer host="192.168.1.108" port="21" rootFolder="/srv/ftp/camera">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="21" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

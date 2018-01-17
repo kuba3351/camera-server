@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  * Kontroler odpowiedzialny za żądania nie pasujące do innych kontrolerów
@@ -32,29 +35,59 @@ public class UtilsController {
     }
 
     @GetMapping("/rebootServer")
-    public void reboot() throws InterruptedException {
+    public void reboot() {
         logger.info("RESTART SERWERA ZA 5 SEKUND!!!");
         Thread thread = new Thread(() -> {
             try {
-                Runtime.getRuntime().exec("sudo systemctl restart camera-server").waitFor();
+                Runtime runtime = Runtime.getRuntime();
+                logger.info("Sprawdzanie usługi camera-server...");
+                Process exec = runtime.exec("systemctl status camera-server");
+                exec.waitFor();
+                InputStream inputStream = exec.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                bufferedReader.lines().filter(line -> line.contains("running")).findFirst().ifPresent((value) -> {
+                    try {
+                        logger.info("Usługa uruchomiona. Rsetartuję za pomocą systemctl...");
+                        runtime.exec("sudo systemctl restart camera-server").waitFor();
+                    } catch (InterruptedException | IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+                bufferedReader.lines().filter(line -> line.contains("dead")).findFirst().ifPresent((value) -> {
+                    logger.info("Usługa nieaktywna. Restartuję za pomocą skryptu...");
+                    try {
+                        runtime.exec("exec /home/pi/restartServer.sh");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
         });
-        Thread.sleep(5000);
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         thread.start();
     }
 
     @GetMapping("/api/mountPendrive")
-    public ResponseEntity mountPendrive() throws IOException, InterruptedException {
+    public ResponseEntity mountPendrive() {
         if (!pendriveService.checkIfPendriveConnected()) {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
-        if (pendriveService.checkWherePendriveMounted().isPresent()) {
-            return new ResponseEntity(HttpStatus.OK);
+        try {
+            if (pendriveService.checkWherePendriveMounted().isPresent()) {
+                return new ResponseEntity(HttpStatus.OK);
+            }
+            return pendriveService.mountPendrive() ?
+                    new ResponseEntity(HttpStatus.OK) :
+                    new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return pendriveService.mountPendrive() ?
-                new ResponseEntity(HttpStatus.OK) :
-                new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

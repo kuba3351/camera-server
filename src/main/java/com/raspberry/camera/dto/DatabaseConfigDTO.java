@@ -1,6 +1,6 @@
 package com.raspberry.camera.dto;
 
-import com.raspberry.camera.entity.DatabaseType;
+import com.raspberry.camera.other.DatabaseType;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;

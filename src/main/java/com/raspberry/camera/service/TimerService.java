@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Serwis służący do obsługi czasomierza
@@ -48,17 +47,19 @@ public class TimerService implements Runnable {
                     e.printStackTrace();
                 }
             } while (timer.tick());
-            logger.info("Odliczanie zakończone. Wysyłam event i robię zdjęcie...");
+            logger.info("Odliczanie zakończone. Wysyłam info i robię zdjęcie...");
             rabbitSender.send("Taking photo...");
-            try {
-                photoController.takePhoto(new FakeHttpServletResponse());
-            } catch (IOException | InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
-            logger.info("Zrobiono zdjęcie. Wysyłam event i resetuję czasomierz.");
-            rabbitSender.send("Photo taken!");
             timer.reset();
+            Thread thread = new Thread(() -> {
+                try {
+                    photoController.takePhoto(new FakeHttpServletResponse());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                logger.info("Zrobiono zdjęcie. Wysyłam info");
+                rabbitSender.send("Photo taken!");
+            });
+            thread.start();
         }
     }
-
 }

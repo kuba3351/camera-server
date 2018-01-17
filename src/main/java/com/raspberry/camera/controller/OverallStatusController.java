@@ -5,11 +5,15 @@ import com.raspberry.camera.dto.SavingPlacesDTO;
 import com.raspberry.camera.service.*;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
+
+import static com.raspberry.camera.service.RobotService.isRobotConnected;
 
 /**
  * Kontroler odpowiedzialny za udostępnienie ogólnych informacji o systemie.
@@ -36,7 +40,7 @@ public class OverallStatusController {
     }
 
     @GetMapping("getAppStatus")
-    public OveralStateDTO getAppStatus() throws IOException, InterruptedException {
+    public ResponseEntity getAppStatus() {
         logger.info("Żądanie pobrania informacji o stanie serwera...");
         OveralStateDTO overalStateDTO = new OveralStateDTO();
         overalStateDTO.setDatabaseConnected(databaseService.getDatabaseSession() != null);
@@ -59,8 +63,14 @@ public class OverallStatusController {
         overalStateDTO.setPendriveEnabled(savingPlacesDTO.getMatPendriveSave() ||
                 savingPlacesDTO.getJpgPendriveSave());
         overalStateDTO.setPendriveConnected(pendriveService.checkIfPendriveConnected());
-        overalStateDTO.setPendriveMounted(pendriveService.checkWherePendriveMounted().isPresent());
-        overalStateDTO.setRobotConnected(robotService.isRobotConnected());
-        return overalStateDTO;
+        try {
+            overalStateDTO.setPendriveMounted(pendriveService.checkWherePendriveMounted().isPresent());
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        overalStateDTO.setRobotConnected(isRobotConnected());
+        overalStateDTO.setConnectRobotEnabled(RobotService.getRobotDTO().getConnect());
+        return new ResponseEntity<>(overalStateDTO, HttpStatus.OK);
     }
 }

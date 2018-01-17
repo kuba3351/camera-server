@@ -29,8 +29,8 @@ public class AutoDiscoveryListener implements Runnable {
                 logger.info("Klient łączy się z serwerem...");
 
                 String message = new String(packet.getData()).trim();
-                if (message.equals("DISCOVER_FUIFSERVER_REQUEST")) {
-                    byte[] sendData = "DISCOVER_FUIFSERVER_RESPONSE".getBytes();
+                if (message.equals("DISCOVER_REQUEST")) {
+                    byte[] sendData = "DISCOVER_RESPONSE".getBytes();
 
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
                     socket.send(sendPacket);

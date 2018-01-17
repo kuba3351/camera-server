@@ -1,8 +1,9 @@
 package com.raspberry.camera.service;
 
-import com.raspberry.camera.dto.PhotoResolutionDTO;
-import com.raspberry.camera.entity.Photo;
-import com.raspberry.camera.entity.RobotState;
+import com.raspberry.camera.dto.PhotoDTO;
+import com.raspberry.camera.other.CameraType;
+import com.raspberry.camera.other.Photo;
+import com.raspberry.camera.other.RobotState;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.highgui.Highgui;
@@ -13,66 +14,82 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.rmi.RemoteException;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class PhotoService {
 
     private ConfigFileService configFileService;
-    private PhotoResolutionDTO photoResolutionDTO;
+    private PhotoDTO photoDTO;
     private RobotService robotService;
     private RobotState robotState;
-    private Photo photo1;
-    private Photo photo2;
-
-    public Photo getPhoto1() {
-        return photo1;
-    }
-
-    public Photo getPhoto2() {
-        return photo2;
-    }
 
     @Autowired
     public PhotoService(ConfigFileService configFileService, RobotService robotService) {
         this.configFileService = configFileService;
-        this.photoResolutionDTO = configFileService.getPhotoResolutionDTO();
+        this.photoDTO = configFileService.getPhotoDTO();
         this.robotService = robotService;
     }
 
-    public PhotoResolutionDTO getPhotoResolutionDTO() {
-        return photoResolutionDTO;
+    public PhotoDTO getPhotoDTO() {
+        return photoDTO;
     }
 
-    public void setPhotoResolutionDTO(PhotoResolutionDTO photoResolutionDTO) throws IOException {
-        this.photoResolutionDTO = photoResolutionDTO;
-        configFileService.writePhotoResolution(photoResolutionDTO);
+    public void setPhotoDTO(PhotoDTO photoDTO) throws IOException {
+        this.photoDTO = photoDTO;
+        configFileService.writePhotoDTO(photoDTO);
     }
 
-    public void takePhotos() throws FileNotFoundException, RemoteException {
-        if(robotService.isRobotConnected()) {
-            robotState = robotService.getRobotState();
+    public Map<Integer, Photo> takePhotos() throws Exception {
+        if(RobotService.isRobotConnected() && RobotService.getRobotDTO().getShouldStopOnPhotos()) {
+            robotState = RobotService.getRobotState();
             robotService.stop();
         }
-        photo1 = new File("/dev/video0").exists() ? takePhoto(0) : null;
-        photo2 = new File("/dev/video1").exists() ? takePhoto(1) : null;
+        Map<Integer, Photo> photoMap = null;
+        if(photoDTO.getCameraType().equals(CameraType.USB)) {
+            Photo photo1 = new File("/dev/video0").exists() ? takePhoto(0) : null;
+            Photo photo2 = new File("/dev/video1").exists() ? takePhoto(1) : null;
+            photoMap = new HashMap<>();
+            photoMap.put(1, photo1);
+            photoMap.put(2, photo2);
+        }
+        if(photoDTO.getCameraType().equals(CameraType.RASPBERRY))
+            photoMap = takePhotosFromPython();
         if(robotState != null) {
             if(robotState.equals(RobotState.FORWARD))
                 robotService.goForward();
             else if(robotState.equals(RobotState.BACKWARD))
                 robotService.goBackward();
         }
+        return photoMap;
     }
 
     private Photo takePhoto(int camera) throws FileNotFoundException {
-        PhotoResolutionDTO photoResolutionDTO = configFileService.getPhotoResolutionDTO();
+        PhotoDTO photoDTO = configFileService.getPhotoDTO();
         VideoCapture capture = new VideoCapture(camera);
         capture.open(camera);
         Mat frame = new Mat();
-        capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, photoResolutionDTO.getWidth());
-        capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, photoResolutionDTO.getHeigth());
+        capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, photoDTO.getWidth());
+        capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, photoDTO.getHeigth());
         capture.read(frame);
         capture.release();
-        return new Photo(frame);
+        MatOfByte buffer = new MatOfByte();
+        Highgui.imencode(".jpg", frame, buffer);
+        return new Photo(frame, buffer.toArray());
+    }
+
+    public Map<Integer, Photo> takePhotosFromPython() throws Exception {
+        if(Runtime.getRuntime().exec("python /home/pi/pythonscript.py "+photoDTO.getWidth()+" "+photoDTO.getHeigth()).waitFor() != 0)
+            throw new Exception("Problem podczas robienia zdjęć");
+        Map<Integer, Photo> photos = new HashMap<>();
+        String file1 = "./capture_1.jpg";
+        Mat mat = Highgui.imread("/capture_1.jpg");
+        photos.put(1, new Photo(mat, Files.readAllBytes(new File(file1).toPath())));
+        String file2 = "./capture_2.jpg";
+        Mat mat2 = Highgui.imread("/capture_2.jpg");
+        photos.put(2, new Photo(mat2, Files.readAllBytes(new File(file2).toPath())));
+        return photos;
     }
 }

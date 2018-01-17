@@ -15,7 +15,7 @@ public class TakePhotoCallable implements Runnable {
     public void run() {
         try {
             photoService.takePhotos();
-        } catch (FileNotFoundException | RemoteException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
