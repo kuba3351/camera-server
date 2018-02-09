@@ -56,7 +56,11 @@ class AuthorizationFilter implements Filter {
                 }
             }
             if (!((HttpServletRequest) servletRequest).getServletPath().startsWith("/api")) {
-                filterChain.doFilter(servletRequest, servletResponse);
+                try {
+                    filterChain.doFilter(servletRequest, servletResponse);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;

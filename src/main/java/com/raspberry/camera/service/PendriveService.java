@@ -70,7 +70,7 @@ public class PendriveService {
         if (!jpgPath.isDirectory())
             jpgPath.mkdir();
         if (photo1 != null) {
-            String jpgFilePath = jpgPath.toString() + "/" + LocalDateTime.now() + "-camera1.jpg";
+            String jpgFilePath = jpgPath.toString() + "/" + LocalDateTime.now().toString().replace(":", "-") + "-camera1.jpg";
             File photo = new File(jpgFilePath.replace(":", "-"));
             photo.createNewFile();
             FileWriter writer = new FileWriter(photo);
@@ -78,7 +78,7 @@ public class PendriveService {
             writer.close();
         }
         if (photo2 != null) {
-            String jpgFilePath = jpgPath.toString() + "/" + LocalDateTime.now() + "-camera2.jpg";
+            String jpgFilePath = jpgPath.toString() + "/" + LocalDateTime.now().toString().replace(":", "-") + "-camera2.jpg";
             FileWriter writer = new FileWriter(new File(jpgFilePath.replace(":", "-")));
             writer.write(new String(photo2.getJpgImage()));
             writer.close();
